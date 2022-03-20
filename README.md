@@ -17,11 +17,11 @@ management, to ensure your code runs using the correct components and not someon
 
 *(fill the table below with the team members, and then delete this line)*
 
-| Number | Name              | User                             | Email                               |
-|--------|-------------------|----------------------------------|-------------------------------------|
-| 11111  | Alice Distributed | <https://github.com/AliceUser>   | <mailto:alice@tecnico.ulisboa.pt>   |
-| 22222  | Bob Systems       | <https://github.com/BobUser>     | <mailto:bob@tecnico.ulisboa.pt>     |
-| 33333  | Charlie Rules     | <https://github.com/CharlieUser> | <mailto:charlie@tecnico.ulisboa.pt> |
+| Number | Name              | User                             | Email                                     |
+|--------|-------------------|----------------------------------|-------------------------------------------|
+| 11111  | Alice Distributed | <https://github.com/AliceUser>   | <mailto:alice@tecnico.ulisboa.pt>         |
+| 22222  | Bob Systems       | <https://github.com/BobUser>     | <mailto:bob@tecnico.ulisboa.pt>           |
+| 95680  | Tomás Tavares     | <https://github.com/Th0mz>       | <mailto:tomasatavares@tecnico.ulisboa.pt> |
 
 ## Getting Started
 
