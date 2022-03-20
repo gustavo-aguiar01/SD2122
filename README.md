@@ -3,9 +3,8 @@
 Distributed Systems Project 2021/2022
 
 ## Authors
-
-*(fill the line below with the group identifier, for example G25, and then delete this line)*  
-**Group GXX**
+ 
+**Group G25**
 
 ### Code Identification
 
