@@ -6,8 +6,8 @@ public class Class {
 
     int capacity;
     boolean openRegistrations = false;
-    ConcurrentHashMap<String, Student> enrolledStudents = new ConcurrentHashMap<String, Student>();
-    ConcurrentHashMap<String, Student> revokedStudents = new ConcurrentHashMap<String, Student>();
+    ConcurrentHashMap<String, classStudent> enrolledStudents = new ConcurrentHashMap<String, classStudent>();
+    ConcurrentHashMap<String, classStudent> revokedStudents = new ConcurrentHashMap<String, classStudent>();
 
     public Class() {}
 
@@ -27,19 +27,19 @@ public class Class {
         this.openRegistrations = openRegistrations;
     }
 
-    public ConcurrentHashMap<String, Student> getEnrolledStudents() {
+    public ConcurrentHashMap<String, classStudent> getEnrolledStudents() {
         return enrolledStudents;
     }
 
-    public void setEnrolledStudents(ConcurrentHashMap<String, Student> enrolledStudents) {
+    public void setEnrolledStudents(ConcurrentHashMap<String, classStudent> enrolledStudents) {
         this.enrolledStudents = enrolledStudents;
     }
 
-    public ConcurrentHashMap<String, Student> getRevokedStudents() {
+    public ConcurrentHashMap<String, classStudent> getRevokedStudents() {
         return revokedStudents;
     }
 
-    public void setRevokedStudents(ConcurrentHashMap<String, Student> revokedStudents) {
+    public void setRevokedStudents(ConcurrentHashMap<String, classStudent> revokedStudents) {
         this.revokedStudents = revokedStudents;
     }
 

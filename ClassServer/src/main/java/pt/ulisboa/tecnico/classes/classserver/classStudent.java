@@ -1,11 +1,11 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
-public class Student {
+public class classStudent {
 
     private String id;
     private String name;
 
-    public Student(String id, String name) {
+    public classStudent(String id, String name) {
         this.id = id;
         this.name = name;
     }
