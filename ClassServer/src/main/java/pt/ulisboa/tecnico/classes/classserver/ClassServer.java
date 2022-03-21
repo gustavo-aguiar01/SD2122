@@ -13,6 +13,8 @@ public class ClassServer {
 
   public static void main(String[] args) throws IOException, InterruptedException {
 
+    Class studentClass = new Class();
+
     System.out.println(ClassServer.class.getSimpleName());
     System.out.printf("Received %d Argument(s)%n", args.length);
     for (int i = 0; i < args.length; i++) {
@@ -21,9 +23,9 @@ public class ClassServer {
 
     port = Integer.valueOf(args[0]);
 
-    final BindableService adminImpl = new AdminServiceImpl();
-    final BindableService professorImpl = new ProfessorServiceImpl();
-    final BindableService studentImpl = new StudentServiceImpl();
+    final BindableService adminImpl = new AdminServiceImpl(studentClass);
+    final BindableService professorImpl = new ProfessorServiceImpl(studentClass);
+    final BindableService studentImpl = new StudentServiceImpl(studentClass);
 
     // Create a new server to listen on port.
     Server server = ServerBuilder.forPort(port).addService(adminImpl)
