@@ -14,12 +14,10 @@ management, to ensure your code runs using the correct components and not someon
 
 ### Team Members
 
-*(fill the table below with the team members, and then delete this line)*
-
 | Number | Name              | User                             | Email                                     |
 |--------|-------------------|----------------------------------|-------------------------------------------|
-| 11111  | Alice Distributed | <https://github.com/AliceUser>   | <mailto:alice@tecnico.ulisboa.pt>         |
-| 22222  | Bob Systems       | <https://github.com/BobUser>     | <mailto:bob@tecnico.ulisboa.pt>           |
+| 95565  | Duarte Almeida | <https://github.com/Duarte-Almeida>   | <mailto:duartecaladoalmeida@tecnico.ulisboa.pt>         |
+| 95587  | Gustavo Aguiar       | <https://github.com/ImGugz>     | <mailto:gustavoaaguiar@tecnico.ulisboa.pt>           |
 | 95680  | Tomás Tavares     | <https://github.com/Th0mz>       | <mailto:tomasatavares@tecnico.ulisboa.pt> |
 
 ## Getting Started
