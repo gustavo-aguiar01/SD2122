@@ -27,7 +27,7 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
                     .asRuntimeException());
         } else {
             EnrollResponse response;
-            if (studentClass.contains(request.getStudent().getStudentId()) == true) {
+            if (studentClass.isStudentEnrolled(request.getStudent().getStudentId()) == true) {
                 response = EnrollResponse.newBuilder().setCode(ResponseCode.STUDENT_ALREADY_ENROLLED).build();
             } else {
                 ClassStudent newStudent = new ClassStudent(request.getStudent().getStudentId(),
@@ -52,7 +52,7 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
                                         .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
         ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
-                        .setOpenEnrollments(studentClass.isOpenRegistrations())
+                        .setOpenEnrollments(studentClass.areRegistrationsOpen())
                                 .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
 
         responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.OK)

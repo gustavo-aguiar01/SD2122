@@ -6,9 +6,10 @@ import java.util.Scanner;
 
 public class Professor {
 
-  private static final String OPEN_ENROLLMENTS_CMD = "abrir_inscricoes";
-  private static final String CLOSE_ENROLLMENTS_CMD = "fechar_inscricoes";
-  private static final String CANCEL_ENROLLMENT_CMD = "cancelar_inscricao";
+  private static final String OPEN_ENROLLMENTS_CMD = "open_enrollments";
+  private static final String CLOSE_ENROLLMENTS_CMD = "close_enrollments";
+  private static final String LIST_CMD = "list";
+  private static final String REVOKE_ENROLLMENT_CMD = "revoke_enrollment";
 
   public static void main(String[] args) {
     System.out.println(Professor.class.getSimpleName());
@@ -31,8 +32,11 @@ public class Professor {
       System.out.printf("%n> ");
       String[] line = scanner.nextLine().split(" ");
 
-      // Open enrollments - abrir_inscricoes cmd
+      // Open enrollments - open_enrollments cmd
       if (OPEN_ENROLLMENTS_CMD.equals(line[0])) {
+        if (line.length != 2) {
+          System.err.println("ERROR: Invalid open_enrollments command usage.");
+        }
         try {
           int capacity = Integer.parseInt(line[1]);
           System.out.println(frontend.openEnrollments(capacity));
@@ -43,13 +47,27 @@ public class Professor {
         }
       }
 
-      // Close enrollments - fechar_inscricoes cmd
+      // Close enrollments - close_enrollments cmd
       if (CLOSE_ENROLLMENTS_CMD.equals(line[0])) {
+        if (line.length != 1) {
+          System.err.println("ERROR: Invalid close_enrollments command usage.");
+        }
         System.out.println(frontend.closeEnrollments());
       }
 
-      // Cancel enrollment - cancelar_inscricao cmd
-      if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
+      // List - list cmd
+      if (LIST_CMD.equals(line[0])) {
+        if (line.length != 1) {
+          System.err.println("ERROR: Invalid list command usage.");
+        }
+        System.out.println(frontend.listClass());
+      }
+
+      // Revoke enrollment - revoke_enrollment cmd
+      if (REVOKE_ENROLLMENT_CMD.equals(line[0])) {
+        if (line.length != 2) {
+          System.err.println("ERROR: Invalid revoke_enrollment command usage.");
+        }
         try {
           System.out.println(frontend.cancelEnrollment(line[1]));
         } catch (StatusRuntimeException e) {
