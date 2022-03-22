@@ -7,12 +7,14 @@ import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 
 public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceImplBase {
+
+    ClassServer.ClassServerState serverState;
     private Class professorClass;
 
-    public ProfessorServiceImpl(Class professorClass) {
-        this.professorClass = professorClass;
+    public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
+        this.serverState = serverState;
     }
-
+ 
     @Override
     public void openEnrollments(ProfessorClassServer.OpenEnrollmentsRequest request, StreamObserver<ProfessorClassServer.OpenEnrollmentsResponse> responseObserver) {
         if (request.getCapacity() < 0) {
