@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceImplBase {
-    private Class professorClass;
 
-    public ProfessorServiceImpl(Class professorClass) {
-        this.professorClass = professorClass;
+    ClassServer.ClassServerState serverState;
+
+    public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
+        this.serverState = serverState;
     }
-
+ 
     @Override
     public void openEnrollments(ProfessorClassServer.OpenEnrollmentsRequest request, StreamObserver<ProfessorClassServer.OpenEnrollmentsResponse> responseObserver) {
         if (request.getCapacity() < 0) {
