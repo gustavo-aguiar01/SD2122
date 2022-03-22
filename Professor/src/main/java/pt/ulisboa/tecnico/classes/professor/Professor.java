@@ -1,12 +1,14 @@
 package pt.ulisboa.tecnico.classes.professor;
 
+import io.grpc.StatusRuntimeException;
+
 import java.util.Scanner;
 
 public class Professor {
 
   private static final String OPEN_ENROLLMENTS_CMD = "abrir_inscricoes";
   private static final String CLOSE_ENROLLMENTS_CMD = "fechar_inscricoes";
-  private static final String CANCEL_ENROLLMENTS_CMD = "cancelar_inscricao";
+  private static final String CANCEL_ENROLLMENT_CMD = "cancelar_inscricao";
 
   public static void main(String[] args) {
     System.out.println(Professor.class.getSimpleName());
@@ -36,6 +38,8 @@ public class Professor {
           System.out.println(frontend.openEnrollments(capacity));
         } catch (NumberFormatException e) {
           System.err.println("ERROR: " + line[1] + " is not a valid integer!");
+        } catch (StatusRuntimeException e) {
+          System.out.println("ERROR: " + e.getStatus().getDescription());
         }
       }
 
@@ -44,10 +48,13 @@ public class Professor {
         System.out.println(frontend.closeEnrollments());
       }
 
-      // Open enrollments - abrir_inscricoes cmd
-      if (CANCEL_ENROLLMENTS_CMD.equals(line[0])) {
-        // TODO: Add verifications
-        System.out.println(frontend.cancelEnrollment(line[1]));
+      // Cancel enrollment - cancelar_inscricao cmd
+      if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
+        try {
+          System.out.println(frontend.cancelEnrollment(line[1]));
+        } catch (StatusRuntimeException e) {
+          System.out.println("ERROR: " + e.getStatus().getDescription());
+        }
       }
 
     }
