@@ -9,7 +9,6 @@ import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceImplBase {
 
     ClassServer.ClassServerState serverState;
-    private Class professorClass;
 
     public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
         this.serverState = serverState;
@@ -21,7 +20,7 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer!").asRuntimeException());
         } else {
             ProfessorClassServer.OpenEnrollmentsResponse response = ProfessorClassServer.OpenEnrollmentsResponse.newBuilder()
-                    .setCode(professorClass.openEnrollments(request.getCapacity())).build();
+                    .setCode(serverState.getStudentClass().openEnrollments(request.getCapacity())).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
@@ -30,7 +29,7 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
     @Override
     public void closeEnrollments(ProfessorClassServer.CloseEnrollmentsRequest request, StreamObserver<ProfessorClassServer.CloseEnrollmentsResponse> responseObserver) {
         ProfessorClassServer.CloseEnrollmentsResponse response = ProfessorClassServer.CloseEnrollmentsResponse.newBuilder()
-                .setCode(professorClass.closeEnrollments()).build();
+                .setCode(serverState.getStudentClass().closeEnrollments()).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -41,7 +40,7 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
         } else {
             ProfessorClassServer.CancelEnrollmentResponse response = ProfessorClassServer.CancelEnrollmentResponse.newBuilder()
-                    .setCode(professorClass.cancelEnrollment(request.getStudentId())).build();
+                    .setCode(serverState.getStudentClass().cancelEnrollment(request.getStudentId())).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }
