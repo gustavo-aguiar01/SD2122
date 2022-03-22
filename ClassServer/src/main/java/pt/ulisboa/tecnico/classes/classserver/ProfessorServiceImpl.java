@@ -25,11 +25,11 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer!").asRuntimeException());
         } else {
             ProfessorClassServer.OpenEnrollmentsResponse response;
-            if (professorClass.areRegistrationsOpen() == true) {
+            if (serverState.getStudentClass().areRegistrationsOpen() == true) {
                 response = ProfessorClassServer.OpenEnrollmentsResponse.newBuilder()
                         .setCode(ResponseCode.ENROLLMENTS_ALREADY_OPENED).build();
             } else {
-                professorClass.openEnrollments(request.getCapacity());
+                serverState.getStudentClass().openEnrollments(request.getCapacity());
                 response = ProfessorClassServer.OpenEnrollmentsResponse.newBuilder()
                         .setCode(ResponseCode.OK).build();
             }
@@ -41,11 +41,11 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
     @Override
     public void closeEnrollments(ProfessorClassServer.CloseEnrollmentsRequest request, StreamObserver<ProfessorClassServer.CloseEnrollmentsResponse> responseObserver) {
         ProfessorClassServer.CloseEnrollmentsResponse response;
-        if (professorClass.areRegistrationsOpen() == false) {
+        if (serverState.getStudentClass().areRegistrationsOpen() == false) {
             response = ProfessorClassServer.CloseEnrollmentsResponse.newBuilder()
                     .setCode(ResponseCode.ENROLLMENTS_ALREADY_CLOSED).build();
         } else {
-            professorClass.closeEnrollments();
+            serverState.getStudentClass().closeEnrollments();
             response = ProfessorClassServer.CloseEnrollmentsResponse.newBuilder()
                     .setCode(ResponseCode.OK).build();
         }
@@ -55,16 +55,16 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
 
     @Override
     public void listClass(ProfessorClassServer.ListClassRequest request, StreamObserver<ProfessorClassServer.ListClassResponse> responseObserver) {
-        List<Student> enrolledStudents = professorClass.getEnrolledStudentsCollection().stream()
+        List<Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
                 .map(s -> Student.newBuilder().setStudentId(s.getId())
                         .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        List<Student> discardedStudents = professorClass.getRevokedStudentsCollection().stream()
+        List<Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
                 .map(s -> Student.newBuilder().setStudentId(s.getId())
                         .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        ClassState state = ClassState.newBuilder().setCapacity(professorClass.getCapacity())
-                .setOpenEnrollments(professorClass.areRegistrationsOpen())
+        ClassState state = ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
+                .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
                 .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
         responseObserver.onNext(ProfessorClassServer.ListClassResponse.newBuilder().setCode(ResponseCode.OK)
                 .setClassState(state).build());
@@ -77,11 +77,11 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
         } else {
             ProfessorClassServer.CancelEnrollmentResponse response;
-            if (professorClass.isStudentEnrolled(request.getStudentId()) == false) {
+            if (serverState.getStudentClass().isStudentEnrolled(request.getStudentId()) == false) {
                 response = ProfessorClassServer.CancelEnrollmentResponse.newBuilder()
                         .setCode(ResponseCode.NON_EXISTING_STUDENT).build();
             } else {
-                professorClass.revokeEnrollment(request.getStudentId());
+                serverState.getStudentClass().revokeEnrollment(request.getStudentId());
                 response = ProfessorClassServer.CancelEnrollmentResponse.newBuilder()
                         .setCode(ResponseCode.OK).build();
             }
