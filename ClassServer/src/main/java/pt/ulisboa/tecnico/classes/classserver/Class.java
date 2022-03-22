@@ -76,16 +76,19 @@ public class Class {
     public void openEnrollments(int capacity) {
         setCapacity(capacity);
         setRegistrationsOpen(true);
+        debug("Opened class enrollment registrations with capacity of " + capacity + "!");
     }
 
     public void closeEnrollments() {
         setCapacity(0); // optional ; whenever we want to open enrollments again capacity must be an argument
         setRegistrationsOpen(false);
+        debug("Closed class enrollment registrations!");
     }
 
     public void revokeEnrollment(String id) {
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
+        debug("Revoked student " + id + "'s registration from class!");
     }
 
 }
