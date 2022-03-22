@@ -6,7 +6,6 @@ import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer;
 
 public class ProfessorFrontend {
     private final ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
