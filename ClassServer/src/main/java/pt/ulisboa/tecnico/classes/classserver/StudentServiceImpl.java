@@ -28,8 +28,14 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
                     .asRuntimeException());
         } else {
             EnrollResponse response;
-            if (serverState.getStudentClass().isStudentEnrolled(request.getStudent().getStudentId()) == true) {
+            if (serverState.isActive() == false) {
+                response = EnrollResponse.newBuilder().setCode(ResponseCode.INACTIVE_SERVER).build();
+            } else if (serverState.getStudentClass().areRegistrationsOpen() == false) {
+                response = EnrollResponse.newBuilder().setCode(ResponseCode.ENROLLMENTS_ALREADY_CLOSED).build();
+            } else if (serverState.getStudentClass().isStudentEnrolled(request.getStudent().getStudentId()) == true) {
                 response = EnrollResponse.newBuilder().setCode(ResponseCode.STUDENT_ALREADY_ENROLLED).build();
+            } else if (serverState.getStudentClass().isFullClass()) {
+                response = EnrollResponse.newBuilder().setCode(ResponseCode.FULL_CLASS).build();
             } else {
                 ClassStudent newStudent = new ClassStudent(request.getStudent().getStudentId(),
                         request.getStudent().getStudentName());
@@ -44,20 +50,27 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
 
     @Override
     public void listClass(ListClassRequest request, StreamObserver<ListClassResponse> responseObserver) {
-        List<Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
-                .map(s -> Student.newBuilder().setStudentId(s.getId())
-                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        ListClassResponse response;
+        if (serverState.isActive() == false) {
+            response = ListClassResponse.newBuilder().setCode(ResponseCode.INACTIVE_SERVER).build();
+        } else {
+            List<Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        List<Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
-                                .map(s -> Student.newBuilder().setStudentId(s.getId())
-                                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+            List<Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        ClassState state = ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
-                        .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
-                                .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
+            ClassState state = ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
+                    .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
+                    .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
 
-        responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.OK)
-                .setClassState(state).build());
+            response = ListClassResponse.newBuilder().setCode(ResponseCode.OK)
+                    .setClassState(state).build();
+        }
+
+        responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
