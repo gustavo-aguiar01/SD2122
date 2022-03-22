@@ -8,7 +8,7 @@ import java.util.Collection;
 public class Class {
 
     int capacity;
-    boolean openRegistrations = false;
+    boolean registrationsOpen = false;
     private ConcurrentHashMap<String, ClassStudent> enrolledStudents = new ConcurrentHashMap<String, ClassStudent>();
     private ConcurrentHashMap<String, ClassStudent> revokedStudents = new ConcurrentHashMap<String, ClassStudent>();
 
@@ -32,12 +32,12 @@ public class Class {
         this.capacity = capacity;
     }
 
-    public boolean isOpenRegistrations() {
-        return openRegistrations;
+    public boolean areRegistrationsOpen() {
+        return registrationsOpen;
     }
 
-    public void setOpenRegistrations(boolean openRegistrations) {
-        this.openRegistrations = openRegistrations;
+    public void setRegistrationsOpen(boolean openRegistrations) {
+        this.registrationsOpen = openRegistrations;
     }
 
     public Collection<ClassStudent> getEnrolledStudentsCollection() {
@@ -64,8 +64,7 @@ public class Class {
         this.revokedStudents = revokedStudents;
     }
 
-
-    public boolean contains(String studentId) {
+    public boolean isStudentEnrolled(String studentId) {
         return enrolledStudents.containsKey(studentId);
     }
 
@@ -74,30 +73,19 @@ public class Class {
         debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
     }
 
-    public ClassesDefinitions.ResponseCode openEnrollments(int capacity) {
-        if (openRegistrations == true) {
-            return ClassesDefinitions.ResponseCode.ENROLLMENTS_ALREADY_OPENED;
-        }
+    public void openEnrollments(int capacity) {
         setCapacity(capacity);
-        setOpenRegistrations(true);
-        return ClassesDefinitions.ResponseCode.OK;
+        setRegistrationsOpen(true);
     }
 
-    public ClassesDefinitions.ResponseCode closeEnrollments() {
-        if (openRegistrations == false) {
-            return ClassesDefinitions.ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
-        }
+    public void closeEnrollments() {
         setCapacity(0); // optional ; whenever we want to open enrollments again capacity must be an argument
-        setOpenRegistrations(false);
-        return ClassesDefinitions.ResponseCode.OK;
+        setRegistrationsOpen(false);
     }
 
-    public ClassesDefinitions.ResponseCode cancelEnrollment(String id) {
-        if (enrolledStudents.get(id) == null) {
-            return ClassesDefinitions.ResponseCode.NON_EXISTING_STUDENT;
-        }
+    public void revokeEnrollment(String id) {
+        revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
-        return ClassesDefinitions.ResponseCode.OK;
     }
 
 }
