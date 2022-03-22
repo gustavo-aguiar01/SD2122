@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.classes.student;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 import java.util.Scanner;
 
@@ -10,8 +11,9 @@ public class Student {
   private static final String HOST = "localhost";
   private static final int port = 8080;
 
-  private static final String ENROLL_CMD = "inscrever";
-  private static final String LIST_CMD = "listar";
+  private static final String ENROLL_CMD = "enroll";
+  private static final String LIST_CMD = "list";
+  private static final String EXIT_CMD = "exit";
 
   public static void main(String[] args) {
 
@@ -34,12 +36,28 @@ public class Student {
       String line = scanner.nextLine();
 
       if (ENROLL_CMD.equals(line)) {
-        studentFrontend.enroll(id, name);
+        try {
+          System.out.println(studentFrontend.enroll(id, name));
+        } catch (StatusRuntimeException e) {
+          System.out.println("ERROR: " +
+                  e.getStatus().getDescription());
+        }
       }
 
       if (LIST_CMD.equals(line)) {
-        System.out.print(studentFrontend.listClass());
+        try {
+          System.out.println(studentFrontend.listClass());
+        } catch (StatusRuntimeException e) {
+          System.out.println("ERROR: " +
+                  e.getStatus().getDescription());
+        }
       }
+
+      if (EXIT_CMD.equals(line)) {
+        break;
+      }
+
     }
+    channel.shutdown();
   }
 }

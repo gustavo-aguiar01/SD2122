@@ -8,6 +8,8 @@ import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import java.util.stream.Collectors;
 import java.util.List;
 
+import static io.grpc.Status.INVALID_ARGUMENT;
+
 public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBase {
 
     private Class studentClass;
@@ -18,10 +20,25 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
 
     @Override
     public void enroll(EnrollRequest request, StreamObserver<EnrollResponse> responseObserver) {
-        studentClass.enroll(new ClassStudent(request.getStudent().getStudentId(),
-                request.getStudent().getStudentName()));
-        responseObserver.onNext(EnrollResponse.getDefaultInstance());
-        responseObserver.onCompleted();
+
+        if (ClassStudent.isValidStudentId(request.getStudent().getStudentId()) == false) {
+            responseObserver.onError(INVALID_ARGUMENT
+                    .withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer)")
+                    .asRuntimeException());
+        } else {
+            EnrollResponse response;
+            if (studentClass.contains(request.getStudent().getStudentId()) == true) {
+                response = EnrollResponse.newBuilder().setCode(ResponseCode.STUDENT_ALREADY_ENROLLED).build();
+            } else {
+                ClassStudent newStudent = new ClassStudent(request.getStudent().getStudentId(),
+                        request.getStudent().getStudentName());
+                studentClass.enroll(newStudent);
+                response = EnrollResponse.newBuilder().setCode(ResponseCode.OK).build();
+            }
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+
     }
 
     @Override

@@ -62,6 +62,10 @@ public class Class {
         this.revokedStudents = revokedStudents;
     }
 
+    public boolean contains(String studentId) {
+        return enrolledStudents.containsKey(studentId);
+    }
+
     public void enroll(ClassStudent student) {
         enrolledStudents.put(student.getId(), student);
         debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());

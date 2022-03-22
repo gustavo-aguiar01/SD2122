@@ -1,6 +1,9 @@
 package pt.ulisboa.tecnico.classes.student;
 
 import io.grpc.ManagedChannel;
+import io.grpc.StatusRuntimeException;
+import pt.ulisboa.tecnico.classes.Stringify;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.Student;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
@@ -14,40 +17,18 @@ public class StudentFrontend {
         this.stub = StudentServiceGrpc.newBlockingStub(channel);
     }
 
-    public void enroll(String id, String name) {
+    public String enroll(String id, String name) throws StatusRuntimeException {
         Student newStudent = Student.newBuilder().setStudentId(id).setStudentName(name).build();
-        stub.enroll(EnrollRequest.newBuilder().setStudent(newStudent).build());
+        return Stringify.format(stub.enroll(EnrollRequest.newBuilder().setStudent(newStudent).build()).getCode());
     }
 
     public String listClass() {
         ListClassResponse response = stub.listClass(ListClassRequest.getDefaultInstance());
-        String res = "";
-        res += response.getCodeValue();
-        res += '\n';
-        res += "Inscritos:\n";
-        if (response.getClassState().getEnrolledList().size() == 0) {
-            res += "VAZIO\n";
+        if (response.getCode() != ClassesDefinitions.ResponseCode.OK) {
+            return Stringify.format(response.getCode());
         } else {
-            for (Student s : response.getClassState().getEnrolledList()) {
-                res += "- ";
-                res += s.getStudentId();
-                res += " ";
-                res += s.getStudentName();
-                res += '\n';
-            }
+            return Stringify.format(response.getClassState());
         }
-        res += "Cancelados:\n";
-        if (response.getClassState().getDiscardedList().size() == 0) {
-            res += "VAZIO\n";
-        } else {
-            for (Student s : response.getClassState().getDiscardedList()) {
-                res += "- ";
-                res += s.getStudentId();
-                res += " ";
-                res += s.getStudentName();
-                res += '\n';
-            }
-        }
-        return res;
     }
+
 }
