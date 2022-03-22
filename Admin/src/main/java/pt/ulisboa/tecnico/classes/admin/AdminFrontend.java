@@ -1,5 +1,8 @@
 package pt.ulisboa.tecnico.classes.admin;
 
+import pt.ulisboa.tecnico.classes.Stringify;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
+import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
 
 import io.grpc.ManagedChannel;
@@ -16,15 +19,28 @@ public class AdminFrontend {
     }
 
     // admin remote methods
-    public void activate () {
+    public String activate () {
 
+        ResponseCode responseCode = stub.activate(ActivateRequest.getDefaultInstance()).getCode();
+        String message = Stringify.format(responseCode);
+
+        return message;
     }
 
-    public void deactivate () {
+    public String deactivate () {
 
+        ResponseCode responseCode = stub.deactivate(DeactivateRequest.getDefaultInstance()).getCode();
+        String message = Stringify.format(responseCode);
+
+        return message;
     }
 
-    public void dump () {
-        // dump method can't be void because it returns a ClassState object
+    public String dump () {
+
+        DumpResponse response = stub.dump(DumpRequest.getDefaultInstance());
+        String message = Stringify.format(response.getCode());
+        String classState = Stringify.format(response.getClassState());
+
+        return message + " " + classState;
     }
 }
