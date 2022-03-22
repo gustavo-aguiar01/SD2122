@@ -3,9 +3,9 @@ package pt.ulisboa.tecnico.classes.classserver;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 
 public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceImplBase {
-    private Class studentClass;
+    ClassServer.ClassServerState serverState;
 
-    public ProfessorServiceImpl(Class studentClass) {
-        this.studentClass = studentClass;
+    public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
+        this.serverState = serverState;
     }
 }

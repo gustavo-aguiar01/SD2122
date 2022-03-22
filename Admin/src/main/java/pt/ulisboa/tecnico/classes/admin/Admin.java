@@ -3,9 +3,6 @@ package pt.ulisboa.tecnico.classes.admin;
 import java.util.Scanner;
 import java.util.Arrays;
 
-import pt.ulisboa.tecnico.classes.Stringify;
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
-
 public class Admin {
 
   private static final String EXIT_CMD = "exit";
@@ -35,25 +32,30 @@ public class Admin {
       String command = line[0];
       String[] arguments = Arrays.copyOfRange(line, 1, line.length);
 
-      if (EXIT_CMD.equals(command)) {
-        scanner.close();
-        return;
+      String response;
+      switch (command) {
+        case EXIT_CMD:
+          scanner.close();
+          break;
 
-      } else if (ACTIVATE_CMD.equals(command)) {
+        case ACTIVATE_CMD:
+          response = frontend.activate();
+          System.out.println(" - " + response);
+          break;
 
-        String response = frontend.activate();
-        System.out.println(" - " + response);
+        case DEACTIVATE_CMD:
+          response = frontend.deactivate();
+          System.out.println(" - " + response);
+          break;
 
-      } else if (DEACTIVATE_CMD.equals(command)) {
+        case DUMP_CMD:
+          response = frontend.dump();
+          System.out.println(" - " + response);
+          break;
 
-        String response = frontend.deactivate();
-        System.out.println(" - " + response);
-
-      } else if (DUMP_CMD.equals(command)) {
-
-        String response = frontend.dump();
-        System.out.println(" - " + response);
-
+        default:
+          System.out.println("Command not found.");
+          break;
       }
     }
   }

@@ -5,16 +5,16 @@ import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
 
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
-    private Class studentClass;
+    ClassServer.ClassServerState serverState;
 
-    public AdminServiceImpl(Class studentClass) {
-        this.studentClass = studentClass;
+    public AdminServiceImpl(ClassServer.ClassServerState serverState) {
+        this.serverState = serverState;
     }
 
     @Override
     public void activate (ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
 
-        System.out.println("Executing activate");
+        serverState.setActive(true);
         ActivateResponse response = ActivateResponse.newBuilder().build();
 
         responseObserver.onNext(response);
@@ -24,7 +24,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
     @Override
     public void deactivate (DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
 
-        System.out.println("Executing deactivate");
+        serverState.setActive(false);
         DeactivateResponse response = DeactivateResponse.newBuilder().build();
 
         responseObserver.onNext(response);
