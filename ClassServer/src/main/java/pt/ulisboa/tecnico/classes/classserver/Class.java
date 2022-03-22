@@ -1,7 +1,9 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
-import java.util.Collection;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collection;
 
 public class Class {
 
@@ -62,6 +64,7 @@ public class Class {
         this.revokedStudents = revokedStudents;
     }
 
+
     public boolean contains(String studentId) {
         return enrolledStudents.containsKey(studentId);
     }
@@ -69,6 +72,32 @@ public class Class {
     public void enroll(ClassStudent student) {
         enrolledStudents.put(student.getId(), student);
         debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
+    }
+
+    public ClassesDefinitions.ResponseCode openEnrollments(int capacity) {
+        if (openRegistrations == true) {
+            return ClassesDefinitions.ResponseCode.ENROLLMENTS_ALREADY_OPENED;
+        }
+        setCapacity(capacity);
+        setOpenRegistrations(true);
+        return ClassesDefinitions.ResponseCode.OK;
+    }
+
+    public ClassesDefinitions.ResponseCode closeEnrollments() {
+        if (openRegistrations == false) {
+            return ClassesDefinitions.ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+        }
+        setCapacity(0); // optional ; whenever we want to open enrollments again capacity must be an argument
+        setOpenRegistrations(false);
+        return ClassesDefinitions.ResponseCode.OK;
+    }
+
+    public ClassesDefinitions.ResponseCode cancelEnrollment(String id) {
+        if (enrolledStudents.get(id) == null) {
+            return ClassesDefinitions.ResponseCode.NON_EXISTING_STUDENT;
+        }
+        enrolledStudents.remove(id);
+        return ClassesDefinitions.ResponseCode.OK;
     }
 
 }
