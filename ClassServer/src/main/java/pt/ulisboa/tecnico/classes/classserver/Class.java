@@ -8,6 +8,7 @@ import java.util.Collection;
 public class Class {
 
     int capacity;
+
     boolean registrationsOpen = false;
     private ConcurrentHashMap<String, ClassStudent> enrolledStudents = new ConcurrentHashMap<String, ClassStudent>();
     private ConcurrentHashMap<String, ClassStudent> revokedStudents = new ConcurrentHashMap<String, ClassStudent>();
@@ -16,7 +17,6 @@ public class Class {
      * The flag can be set using the -Ddebug command line option. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    /** Helper method to print debug messages. */
     private static void debug(String debugMessage) {
         if (DEBUG_FLAG)
             System.err.println(debugMessage);
@@ -68,9 +68,19 @@ public class Class {
         return enrolledStudents.containsKey(studentId);
     }
 
+    public boolean isFullClass() {
+        return enrolledStudents.size() >= capacity;
+    }
+
     public void enroll(ClassStudent student) {
-        enrolledStudents.put(student.getId(), student);
-        debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
+
+        debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
+                (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity);
+
+        if (registrationsOpen == true && isFullClass() == false) {
+            enrolledStudents.put(student.getId(), student);
+            debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
+        }
     }
 
     public void openEnrollments(int capacity) {
