@@ -26,4 +26,8 @@ public class ClassStudent {
         this.name = name;
     }
 
+    public static boolean isValidStudentId(String id) {
+        return id.matches("^aluno\\d{4}$");
+    }
+
 }
