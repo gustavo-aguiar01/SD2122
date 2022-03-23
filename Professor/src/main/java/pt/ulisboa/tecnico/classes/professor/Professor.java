@@ -14,7 +14,7 @@ public class Professor {
   private static final String OPEN_ENROLLMENTS_CMD = "openEnrollments";
   private static final String CLOSE_ENROLLMENTS_CMD = "closeEnrollments";
   private static final String LIST_CMD = "list";
-  private static final String REVOKE_ENROLLMENT_CMD = "cancelEnrollment";
+  private static final String CANCEL_ENROLLMENT_CMD = "cancelEnrollment";
   private static final String EXIT_CMD = "exit";
 
   public static void main(String[] args) {
@@ -34,7 +34,7 @@ public class Professor {
       System.out.printf("> ");
       String[] line = scanner.nextLine().split(" ");
 
-      // Open enrollments - open_enrollments cmd
+      // Open enrollments - openEnrollments cmd
       if (OPEN_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 2) {
           System.err.println("ERROR: Invalid open_enrollments command usage.");
@@ -50,7 +50,7 @@ public class Professor {
         }
       }
 
-      // Close enrollments - close_enrollments cmd
+      // Close enrollments - closeEnrollments cmd
       if (CLOSE_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 1) {
           System.err.println("ERROR: Invalid close_enrollments command usage.");
@@ -68,8 +68,8 @@ public class Professor {
         System.out.println(frontend.listClass());
       }
 
-      // Revoke enrollment - revoke_enrollment cmd
-      if (REVOKE_ENROLLMENT_CMD.equals(line[0])) {
+      // Cancel enrollment - cancelEnrollment cmd
+      if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
         if (line.length != 2) {
           System.err.println("ERROR: Invalid revoke_enrollment command usage.");
           continue;

@@ -25,12 +25,16 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
             return;
         }
         OpenEnrollmentsResponse response;
-        if (!serverState.isActive()) {
+        if (!serverState.isActive()) { // Server inactive
             response = OpenEnrollmentsResponse.newBuilder()
                     .setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else if (serverState.getStudentClass().areRegistrationsOpen()) {
+        } else if (serverState.getStudentClass().areRegistrationsOpen()) { // Enrollments are already opened
             response = OpenEnrollmentsResponse.newBuilder()
                     .setCode(ResponseCode.ENROLLMENTS_ALREADY_OPENED).build();
+        } else if (serverState.getStudentClass().getEnrolledStudentsCollection().size() >= request.getCapacity()) {
+            // New capacity is < than the number of students already enrolled in this class
+            response = OpenEnrollmentsResponse.newBuilder()
+                    .setCode(ResponseCode.FULL_CLASS).build();
         } else {
             serverState.getStudentClass().openEnrollments(request.getCapacity());
             response = OpenEnrollmentsResponse.newBuilder()
