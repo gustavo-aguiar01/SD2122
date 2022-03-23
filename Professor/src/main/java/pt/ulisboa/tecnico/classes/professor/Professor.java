@@ -11,18 +11,13 @@ public class Professor {
   private static final String HOSTNAME = "localhost";
   private static final int PORT_NUMBER = 8080;
 
-  private static final String OPEN_ENROLLMENTS_CMD = "open_enrollments";
-  private static final String CLOSE_ENROLLMENTS_CMD = "close_enrollments";
+  private static final String OPEN_ENROLLMENTS_CMD = "openEnrollments";
+  private static final String CLOSE_ENROLLMENTS_CMD = "closeEnrollments";
   private static final String LIST_CMD = "list";
-  private static final String REVOKE_ENROLLMENT_CMD = "revoke_enrollment";
+  private static final String REVOKE_ENROLLMENT_CMD = "cancelEnrollment";
   private static final String EXIT_CMD = "exit";
 
   public static void main(String[] args) {
-    System.out.println(Professor.class.getSimpleName());
-    System.out.printf("Received %d Argument(s)%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("args[%d] = %s%n", i, args[i]);
-    }
 
     // Argument validation
     if (args.length != 0) {
@@ -36,7 +31,7 @@ public class Professor {
     Scanner scanner = new Scanner(System.in);
 
     while(true) {
-      System.out.printf("%n> ");
+      System.out.printf("> ");
       String[] line = scanner.nextLine().split(" ");
 
       // Open enrollments - open_enrollments cmd
@@ -90,6 +85,7 @@ public class Professor {
       if (EXIT_CMD.equals(line[0])) {
         break;
       }
+      System.out.printf("%n");
     }
     channel.shutdown();
   }

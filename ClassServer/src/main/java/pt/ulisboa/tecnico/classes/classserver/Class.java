@@ -90,7 +90,6 @@ public class Class {
     }
 
     public void closeEnrollments() {
-        setCapacity(0); // optional ; whenever we want to open enrollments again capacity must be an argument
         setRegistrationsOpen(false);
         debug("Closed class enrollment registrations!");
     }
