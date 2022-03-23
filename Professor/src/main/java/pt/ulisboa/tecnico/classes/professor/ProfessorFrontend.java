@@ -1,7 +1,6 @@
 package pt.ulisboa.tecnico.classes.professor;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
@@ -10,10 +9,7 @@ import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 public class ProfessorFrontend {
     private final ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
 
-    public ProfessorFrontend() {
-        final String host = "127.0.0.1";
-        final int port = 8080;
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+    public ProfessorFrontend(ManagedChannel channel) {
         stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
