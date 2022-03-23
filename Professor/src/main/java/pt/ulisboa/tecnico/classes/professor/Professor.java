@@ -31,7 +31,7 @@ public class Professor {
     Scanner scanner = new Scanner(System.in);
 
     while(true) {
-      System.out.printf("%n> ");
+      System.out.printf("> ");
       String[] line = scanner.nextLine().split(" ");
 
       // Open enrollments - open_enrollments cmd
@@ -85,6 +85,7 @@ public class Professor {
       if (EXIT_CMD.equals(line[0])) {
         break;
       }
+      System.out.printf("%n");
     }
     channel.shutdown();
   }

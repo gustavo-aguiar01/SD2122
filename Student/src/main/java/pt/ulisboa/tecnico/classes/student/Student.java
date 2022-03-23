@@ -19,14 +19,12 @@ public class Student {
 
     Scanner scanner = new Scanner(System.in);
 
-    System.out.println(Student.class.getSimpleName());
-    System.out.printf("Received %d Argument(s)%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("args[%d] = %s%n", i, args[i]);
-    }
-
     final String id = args[0];
-    final String name = args[1];
+    StringBuilder nameBuilder = new StringBuilder(args[1]);
+    for (int i = 2; i < args.length; i++) {
+      nameBuilder.append(" " + args[i]);
+    }
+    final String name = nameBuilder.toString();
 
     final ManagedChannel channel = ManagedChannelBuilder.forAddress(HOST, port).usePlaintext().build();
     final StudentFrontend studentFrontend = new StudentFrontend(channel);
@@ -57,6 +55,7 @@ public class Student {
         break;
       }
 
+      System.out.printf("%n");
     }
     channel.shutdown();
   }
