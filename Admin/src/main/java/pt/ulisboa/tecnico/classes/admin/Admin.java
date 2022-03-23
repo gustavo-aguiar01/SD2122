@@ -12,13 +12,6 @@ public class Admin {
 
   public static void main(String[] args) {
 
-
-    System.out.println(Admin.class.getSimpleName());
-    System.out.printf("Received %d Argument(s)%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("args[%d] = %s%n", i, args[i]);
-    }
-
     final String host = "localhost";
     final int port = 8080;
 
@@ -51,6 +44,8 @@ public class Admin {
       } else {
         System.out.println("Command not found.");
       }
+
+      System.out.printf("%n");
     }
   }
 }
