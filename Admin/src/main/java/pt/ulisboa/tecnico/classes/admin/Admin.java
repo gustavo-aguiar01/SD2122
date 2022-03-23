@@ -12,13 +12,6 @@ public class Admin {
 
   public static void main(String[] args) {
 
-
-    System.out.println(Admin.class.getSimpleName());
-    System.out.printf("Received %d Argument(s)%n", args.length);
-    for (int i = 0; i < args.length; i++) {
-      System.out.printf("args[%d] = %s%n", i, args[i]);
-    }
-
     final String host = "localhost";
     final int port = 8080;
 
@@ -33,30 +26,26 @@ public class Admin {
       String[] arguments = Arrays.copyOfRange(line, 1, line.length);
 
       String response;
-      switch (command) {
-        case EXIT_CMD:
-          scanner.close();
-          break;
-
-        case ACTIVATE_CMD:
-          response = frontend.activate();
-          System.out.println(" - " + response);
-          break;
-
-        case DEACTIVATE_CMD:
-          response = frontend.deactivate();
-          System.out.println(" - " + response);
-          break;
-
-        case DUMP_CMD:
-          response = frontend.dump();
-          System.out.println(" - " + response);
-          break;
-
-        default:
-          System.out.println("Command not found.");
-          break;
+      if (EXIT_CMD.equals(command)) {
+        scanner.close();
+        System.exit(0);
       }
+      else if (ACTIVATE_CMD.equals(command)) {
+        response = frontend.activate();
+        System.out.println(response);
+      }
+      else if (DEACTIVATE_CMD.equals(command)) {
+        response = frontend.deactivate();
+        System.out.println(response);
+      }
+      else if (DUMP_CMD.equals(command)) {
+        response = frontend.dump();
+        System.out.println(response);
+      } else {
+        System.out.println("Command not found.");
+      }
+
+      System.out.printf("%n");
     }
   }
 }

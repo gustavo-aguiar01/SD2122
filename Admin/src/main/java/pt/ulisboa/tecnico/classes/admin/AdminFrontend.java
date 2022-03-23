@@ -38,9 +38,15 @@ public class AdminFrontend {
     public String dump () {
 
         DumpResponse response = stub.dump(DumpRequest.getDefaultInstance());
-        String message = Stringify.format(response.getCode());
-        String classState = Stringify.format(response.getClassState());
+        ResponseCode code = response.getCode();
 
-        return message + " " + classState;
+        String message;
+        if (code == ResponseCode.OK) {
+            message = Stringify.format(response.getClassState());
+        } else {
+            message = Stringify.format(code);
+        }
+
+        return message;
     }
 }
