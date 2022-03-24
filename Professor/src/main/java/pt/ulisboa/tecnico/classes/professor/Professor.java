@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.classes.professor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import pt.ulisboa.tecnico.classes.ErrorMessage;
 
 import java.util.Scanner;
 
@@ -21,8 +22,7 @@ public class Professor {
 
     // Argument validation
     if (args.length != 0) {
-      System.err.println("No arguments needed!");
-      System.err.printf("Usage: java %s%n", Professor.class.getSimpleName());
+      ErrorMessage.errorExit("No arguments needed!");
     }
 
     // Frontend connection establishment
@@ -37,23 +37,23 @@ public class Professor {
       // Open enrollments - openEnrollments cmd
       if (OPEN_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 2) {
-          System.err.println("ERROR: Invalid " +  OPEN_ENROLLMENTS_CMD + "command usage.");
+          ErrorMessage.error("Invalid " +  OPEN_ENROLLMENTS_CMD + "command usage.");
           continue;
         }
         try {
           int capacity = Integer.parseInt(line[1]);
           System.out.println(frontend.openEnrollments(capacity));
         } catch (NumberFormatException e) {
-          System.err.println("ERROR: " + line[1] + " is not a valid integer!");
+          ErrorMessage.error(line[1] + " is not a valid integer!");
         } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " + e.getStatus().getDescription());
+          ErrorMessage.error(e.getStatus().getDescription());
         }
       }
 
       // Close enrollments - closeEnrollments cmd
       if (CLOSE_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 1) {
-          System.err.println("ERROR: Invalid" + CLOSE_ENROLLMENTS_CMD + "command usage.");
+          ErrorMessage.error("Invalid" + CLOSE_ENROLLMENTS_CMD + "command usage.");
           continue;
         }
         System.out.println(frontend.closeEnrollments());
@@ -62,7 +62,7 @@ public class Professor {
       // List - list cmd
       if (LIST_CMD.equals(line[0])) {
         if (line.length != 1) {
-          System.err.println("ERROR: Invalid" + LIST_CMD + "command usage.");
+          ErrorMessage.error("Invalid" + LIST_CMD + "command usage.");
           continue;
         }
         System.out.println(frontend.listClass());
@@ -71,13 +71,14 @@ public class Professor {
       // Cancel enrollment - cancelEnrollment cmd
       if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
         if (line.length != 2) {
-          System.err.println("ERROR: Invalid" + CANCEL_ENROLLMENT_CMD + "command usage.");
+          ErrorMessage.error("Invalid" + CANCEL_ENROLLMENT_CMD + "command usage.");
           continue;
         }
         try {
           System.out.println(frontend.cancelEnrollment(line[1]));
         } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " + e.getStatus().getDescription());
+
+          ErrorMessage.error(e.getStatus().getDescription());
         }
       }
 
@@ -85,6 +86,7 @@ public class Professor {
       if (EXIT_CMD.equals(line[0])) {
         break;
       }
+
       System.out.printf("%n");
     }
     channel.shutdown();

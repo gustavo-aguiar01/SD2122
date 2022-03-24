@@ -1,12 +1,10 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
+import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 public class Class {
 
@@ -18,11 +16,6 @@ public class Class {
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-
-    private static void debug(String debugMessage) {
-        if (DEBUG_FLAG)
-            System.err.println(debugMessage);
-    }
 
     public Class() {}
 
@@ -89,12 +82,12 @@ public class Class {
             throw new FullClassException();
         }
 
-        debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
-                (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity);
+        DebugMessage.debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
+                (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity, DEBUG_FLAG);
 
         if (registrationsOpen == true && isFullClass() == false) {
             enrolledStudents.put(student.getId(), student);
-            debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
+            DebugMessage.debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName(), DEBUG_FLAG);
         }
     }
 
@@ -111,7 +104,7 @@ public class Class {
 
         setCapacity(capacity);
         setRegistrationsOpen(true);
-        debug("Opened class enrollment registrations with capacity of " + capacity + "!");
+        DebugMessage.debug("Opened class enrollment registrations with capacity of " + capacity + "!", DEBUG_FLAG);
     }
 
     public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
@@ -122,7 +115,7 @@ public class Class {
         }
 
         setRegistrationsOpen(false);
-        debug("Closed class enrollment registrations!");
+        DebugMessage.debug("Closed class enrollment registrations!", DEBUG_FLAG);
     }
 
     public void revokeEnrollment(String id) throws NonExistingStudentException {
@@ -134,7 +127,7 @@ public class Class {
 
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
-        debug("Revoked student " + id + "'s registration from class!");
+        DebugMessage.debug("Revoked student " + id + "'s registration from class!", DEBUG_FLAG);
     }
 
 }

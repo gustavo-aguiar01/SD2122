@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.classes.student;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import pt.ulisboa.tecnico.classes.ErrorMessage;
 
 import java.util.Scanner;
 
@@ -20,6 +21,7 @@ public class Student {
     Scanner scanner = new Scanner(System.in);
 
     final String id = args[0];
+
     StringBuilder nameBuilder = new StringBuilder(args[1]);
     for (int i = 2; i < args.length; i++) {
       nameBuilder.append(" " + args[i]);
@@ -37,8 +39,7 @@ public class Student {
         try {
           System.out.println(studentFrontend.enroll(id, name));
         } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " +
-                  e.getStatus().getDescription());
+          ErrorMessage.error(e.getStatus().getDescription());
         }
       }
 
@@ -46,8 +47,7 @@ public class Student {
         try {
           System.out.println(studentFrontend.listClass());
         } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " +
-                  e.getStatus().getDescription());
+          ErrorMessage.error(e.getStatus().getDescription());
         }
       }
 
