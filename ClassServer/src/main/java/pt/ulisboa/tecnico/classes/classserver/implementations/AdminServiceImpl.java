@@ -3,12 +3,16 @@ package pt.ulisboa.tecnico.classes.classserver;
 import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 
 
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceImplBase;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class AdminServiceImpl extends AdminServiceImplBase {
@@ -46,7 +50,20 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
         try {
             Class studentClass = serverState.getStudentClass();
-            ClassState state = studentClass.getClassState();
+
+            // Construct ClassState
+            List<ClassesDefinitions.Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
+                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+            List<ClassesDefinitions.Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
+                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+            ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
+                    .setOpenEnrollments(studentClass.areRegistrationsOpen())
+                    .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
+
 
             response = DumpResponse.newBuilder().setCode(code)
                     .setClassState(state).build();

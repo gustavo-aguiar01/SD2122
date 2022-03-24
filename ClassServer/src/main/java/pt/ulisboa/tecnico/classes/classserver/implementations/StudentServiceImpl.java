@@ -1,12 +1,16 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
 import io.grpc.stub.StreamObserver;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
@@ -74,7 +78,19 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         try {
             Class studentClass = serverState.getStudentClass();
-            ClassState state = studentClass.getClassState();
+
+            // Construct ClassState
+            List<Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
+                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+            List<ClassesDefinitions.Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
+                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+            ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
+                    .setOpenEnrollments(studentClass.areRegistrationsOpen())
+                    .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
 
             response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
