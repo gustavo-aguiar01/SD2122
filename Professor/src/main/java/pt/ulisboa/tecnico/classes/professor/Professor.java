@@ -22,7 +22,7 @@ public class Professor {
 
     // Argument validation
     if (args.length != 0) {
-      ErrorMessage.errorExit("No arguments needed!");
+      ErrorMessage.fatalError("No arguments needed!");
     }
 
     // Frontend connection establishment

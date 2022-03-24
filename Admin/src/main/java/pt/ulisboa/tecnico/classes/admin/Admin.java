@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.classes.admin;
 
+import pt.ulisboa.tecnico.classes.ErrorMessage;
+
 import java.util.Scanner;
 import java.util.Arrays;
 
@@ -11,6 +13,10 @@ public class Admin {
   private static final String DUMP_CMD = "dump";
 
   public static void main(String[] args) {
+
+    if (args.length != 0) {
+      ErrorMessage.fatalError("No arguments needed.");
+    }
 
     final String host = "localhost";
     final int port = 8080;

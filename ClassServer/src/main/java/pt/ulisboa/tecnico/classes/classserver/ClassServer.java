@@ -55,7 +55,7 @@ public class ClassServer {
     System.out.printf("Received %d Argument(s)%n", args.length);
 
     if (args.length != 3) {
-      ErrorMessage.errorExit("Invalid command expected : <hostname> <port> <P/S>");
+      ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
     }
 
     host = args[0];
@@ -63,15 +63,15 @@ public class ClassServer {
     try {
       port = Integer.parseInt(args[1]);
     } catch (NumberFormatException e) {
-      ErrorMessage.errorExit("Invalid port number");
+      ErrorMessage.fatalError("Invalid port number");
     }
 
     if (1024 <= port && port <= 65535) {
-      ErrorMessage.errorExit("Invalid port number");
+      ErrorMessage.fatalError("Invalid port number");
     }
 
     if (! (args[2] == "P" || args[2] == "S")) {
-      ErrorMessage.errorExit("Invalid command expected : <hostname> <port> <P/S>");
+      ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
     }
 
     serverState = new ClassServerState(args[2]);
