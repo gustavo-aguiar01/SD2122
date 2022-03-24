@@ -4,6 +4,8 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
+import pt.ulisboa.tecnico.classes.classserver.implementations.*;
+
 import java.io.IOException;
 
 public class ClassServer {
