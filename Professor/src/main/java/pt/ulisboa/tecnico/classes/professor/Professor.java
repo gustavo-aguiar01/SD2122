@@ -37,7 +37,7 @@ public class Professor {
       // Open enrollments - openEnrollments cmd
       if (OPEN_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 2) {
-          System.err.println("ERROR: Invalid open_enrollments command usage.");
+          System.err.println("ERROR: Invalid " +  OPEN_ENROLLMENTS_CMD + "command usage.");
           continue;
         }
         try {
@@ -53,7 +53,7 @@ public class Professor {
       // Close enrollments - closeEnrollments cmd
       if (CLOSE_ENROLLMENTS_CMD.equals(line[0])) {
         if (line.length != 1) {
-          System.err.println("ERROR: Invalid close_enrollments command usage.");
+          System.err.println("ERROR: Invalid" + CLOSE_ENROLLMENTS_CMD + "command usage.");
           continue;
         }
         System.out.println(frontend.closeEnrollments());
@@ -62,7 +62,7 @@ public class Professor {
       // List - list cmd
       if (LIST_CMD.equals(line[0])) {
         if (line.length != 1) {
-          System.err.println("ERROR: Invalid list command usage.");
+          System.err.println("ERROR: Invalid" + LIST_CMD + "command usage.");
           continue;
         }
         System.out.println(frontend.listClass());
@@ -71,7 +71,7 @@ public class Professor {
       // Cancel enrollment - cancelEnrollment cmd
       if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
         if (line.length != 2) {
-          System.err.println("ERROR: Invalid revoke_enrollment command usage.");
+          System.err.println("ERROR: Invalid" + CANCEL_ENROLLMENT_CMD + "command usage.");
           continue;
         }
         try {

@@ -21,6 +21,8 @@ public class Admin {
 
     while (true) {
       System.out.printf("> ");
+
+      // split input by spaces to obtain command and args
       String[] line = scanner.nextLine().split(" ");
       String command = line[0];
       String[] arguments = Arrays.copyOfRange(line, 1, line.length);

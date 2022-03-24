@@ -1,6 +1,6 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
 import java.util.List;
@@ -16,8 +16,7 @@ public class Class {
     private ConcurrentHashMap<String, ClassStudent> enrolledStudents = new ConcurrentHashMap<String, ClassStudent>();
     private ConcurrentHashMap<String, ClassStudent> revokedStudents = new ConcurrentHashMap<String, ClassStudent>();
 
-    /** Set flag to true to print debug messages.
-     * The flag can be set using the -Ddebug command line option. */
+    /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     private static void debug(String debugMessage) {
@@ -75,17 +74,17 @@ public class Class {
         return enrolledStudents.size() >= capacity;
     }
 
-    public synchronized ClassesDefinitions.ClassState getClassState() {
-
-        List<ClassesDefinitions.Student> enrolledStudents = this.getEnrolledStudentsCollection().stream()
-                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+    public synchronized ClassState getClassState() {
+        // Construct ClassState
+        List<Student> enrolledStudents = this.getEnrolledStudentsCollection().stream()
+                .map(s -> Student.newBuilder().setStudentId(s.getId())
                         .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        List<ClassesDefinitions.Student> discardedStudents = this.getRevokedStudentsCollection().stream()
-                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+        List<Student> discardedStudents = this.getRevokedStudentsCollection().stream()
+                .map(s -> Student.newBuilder().setStudentId(s.getId())
                         .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-        ClassesDefinitions.ClassState state = ClassesDefinitions.ClassState.newBuilder().setCapacity(this.getCapacity())
+        ClassState state = ClassState.newBuilder().setCapacity(this.getCapacity())
                 .setOpenEnrollments(this.areRegistrationsOpen())
                 .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
 

@@ -7,6 +7,7 @@ import io.grpc.ServerBuilder;
 import java.io.IOException;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 
+/* Representation of the server state */
 public class ClassServer {
 
   /* Server host port. */
@@ -25,6 +26,8 @@ public class ClassServer {
     }
 
     public Class getStudentClass() throws InactiveServerException {
+
+      /* Can only access server contents if the server is active */
       if (! this.isActive()) {
         throw new InactiveServerException();
       }
@@ -35,7 +38,6 @@ public class ClassServer {
     public synchronized void setActive(boolean active) {
       this.active = active;
     }
-
     public synchronized boolean isActive() {
       return active;
     }
@@ -45,6 +47,7 @@ public class ClassServer {
 
     System.out.println(ClassServer.class.getSimpleName());
     System.out.printf("Received %d Argument(s)%n", args.length);
+
     for (int i = 0; i < args.length; i++) {
       System.out.printf("args[%d] = %s%n", i, args[i]);
     }
@@ -52,6 +55,7 @@ public class ClassServer {
     serverState = new ClassServerState();
     port = 8080;
 
+    // create services instances
     final BindableService adminImpl = new AdminServiceImpl(serverState);
     final BindableService professorImpl = new ProfessorServiceImpl(serverState);
     final BindableService studentImpl = new StudentServiceImpl(serverState);

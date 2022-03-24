@@ -3,18 +3,14 @@ package pt.ulisboa.tecnico.classes.classserver;
 import io.grpc.stub.StreamObserver;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 
-import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer;
-import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
-import java.util.stream.Collectors;
-import java.util.List;
-
 import static io.grpc.Status.INVALID_ARGUMENT;
 
-public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBase {
+public class StudentServiceImpl extends StudentServiceImplBase {
 
     private ClassServer.ClassServerState serverState;
 

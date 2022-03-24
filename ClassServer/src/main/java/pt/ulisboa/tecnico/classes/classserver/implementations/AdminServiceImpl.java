@@ -8,13 +8,10 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 
 
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
-import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
+import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceImplBase;
 
-import java.util.stream.Collectors;
-import java.util.List;
 
-public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
+public class AdminServiceImpl extends AdminServiceImplBase {
     ClassServer.ClassServerState serverState;
 
     public AdminServiceImpl(ClassServer.ClassServerState serverState) {
