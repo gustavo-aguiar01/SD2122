@@ -23,14 +23,15 @@ public class ClassServer {
       this.studentClass = new Class();
     }
 
-    public Class getStudentClass() {
+    public synchronized Class getStudentClass() {
       return studentClass;
     }
 
-    public void setActive(boolean active) {
+    public synchronized void setActive(boolean active) {
       this.active = active;
     }
-    public boolean isActive() {
+
+    public synchronized boolean isActive() {
       return active;
     }
   }
