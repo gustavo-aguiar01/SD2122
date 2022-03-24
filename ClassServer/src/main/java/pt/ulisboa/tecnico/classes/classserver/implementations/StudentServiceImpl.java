@@ -3,8 +3,11 @@ package pt.ulisboa.tecnico.classes.classserver;
 import io.grpc.stub.StreamObserver;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 
+import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
+
+import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
 import java.util.stream.Collectors;
 import java.util.List;
@@ -31,52 +34,68 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
                     .withDescription("Invalid student name input! Student name should have from 3 to 30 characters " +
                             "including spaces")
                     .asRuntimeException());
-        } else {
-            EnrollResponse response;
-            if (serverState.isActive() == false) {
-                response = EnrollResponse.newBuilder().setCode(ResponseCode.INACTIVE_SERVER).build();
-            } else if (serverState.getStudentClass().areRegistrationsOpen() == false) {
-                response = EnrollResponse.newBuilder().setCode(ResponseCode.ENROLLMENTS_ALREADY_CLOSED).build();
-            } else if (serverState.getStudentClass().isStudentEnrolled(request.getStudent().getStudentId()) == true) {
-                response = EnrollResponse.newBuilder().setCode(ResponseCode.STUDENT_ALREADY_ENROLLED).build();
-            } else if (serverState.getStudentClass().isFullClass()) {
-                response = EnrollResponse.newBuilder().setCode(ResponseCode.FULL_CLASS).build();
-            } else {
-                ClassStudent newStudent = new ClassStudent(request.getStudent().getStudentId(),
-                        request.getStudent().getStudentName());
-                serverState.getStudentClass().enroll(newStudent);
-                response = EnrollResponse.newBuilder().setCode(ResponseCode.OK).build();
-            }
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
         }
+
+        EnrollResponse response;
+        ResponseCode code = ResponseCode.OK;
+
+        try {
+            Class studentClass = serverState.getStudentClass();
+
+            String id = request.getStudent().getStudentId();
+            String name = request.getStudent().getStudentName();
+            ClassStudent student = new ClassStudent(id, name);
+
+            studentClass.enroll(student);
+
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
+        } catch (EnrollmentsAlreadyClosedException e) {
+            code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+
+        } catch (StudentAlreadyEnrolledException e) {
+            code = ResponseCode.STUDENT_ALREADY_ENROLLED;
+
+        } catch (FullClassException e) {
+            code = ResponseCode.FULL_CLASS;
+
+        }
+
+        response = EnrollResponse.newBuilder()
+                .setCode(code).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
 
     }
 
     @Override
     public void listClass(ListClassRequest request, StreamObserver<ListClassResponse> responseObserver) {
+
         ListClassResponse response;
-        if (serverState.isActive() == false) {
-            response = ListClassResponse.newBuilder().setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else {
-            List<Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
-                    .map(s -> Student.newBuilder().setStudentId(s.getId())
-                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        ResponseCode code = ResponseCode.OK;
 
-            List<Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
-                    .map(s -> Student.newBuilder().setStudentId(s.getId())
-                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        try {
+            Class studentClass = serverState.getStudentClass();
+            ClassState state = studentClass.getClassState();
 
-            ClassState state = ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
-                    .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
-                    .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
-
-            response = ListClassResponse.newBuilder().setCode(ResponseCode.OK)
+            response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
         }
+
+        response = ListClassResponse.newBuilder()
+                .setCode(code).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
-
 }

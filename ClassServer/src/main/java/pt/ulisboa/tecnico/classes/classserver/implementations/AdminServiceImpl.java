@@ -1,10 +1,15 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
 import io.grpc.stub.StreamObserver;
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
+
+
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer;
+import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
 
 import java.util.stream.Collectors;
 import java.util.List;
@@ -40,21 +45,26 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase {
     public void dump (DumpRequest request, StreamObserver<DumpResponse> responseObserver) {
 
         DumpResponse response;
+        ResponseCode code = ResponseCode.OK;
 
-        List<ClassesDefinitions.Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
-                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
-                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        try {
+            Class studentClass = serverState.getStudentClass();
+            ClassState state = studentClass.getClassState();
 
-        List<ClassesDefinitions.Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
-                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
-                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+            response = DumpResponse.newBuilder().setCode(code)
+                    .setClassState(state).build();
 
-        ClassesDefinitions.ClassState state = ClassesDefinitions.ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
-                .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
-                .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
 
-        response = DumpResponse.newBuilder().setCode(ClassesDefinitions.ResponseCode.OK)
-                .setClassState(state).build();
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
+        }
+
+        response = DumpResponse.newBuilder()
+                .setCode(code).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

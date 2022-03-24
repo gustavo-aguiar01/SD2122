@@ -5,12 +5,13 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
-import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceImplBase {
+public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
     ClassServer.ClassServerState serverState;
 
@@ -20,90 +21,115 @@ public class ProfessorServiceImpl extends ProfessorServiceGrpc.ProfessorServiceI
  
     @Override
     public void openEnrollments(OpenEnrollmentsRequest request, StreamObserver<OpenEnrollmentsResponse> responseObserver) {
+
         if (request.getCapacity() < 0) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer!").asRuntimeException());
             return;
         }
+
         OpenEnrollmentsResponse response;
-        if (!serverState.isActive()) { // Server inactive
-            response = OpenEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else if (serverState.getStudentClass().areRegistrationsOpen()) { // Enrollments are already opened
-            response = OpenEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.ENROLLMENTS_ALREADY_OPENED).build();
-        } else if (serverState.getStudentClass().getEnrolledStudentsCollection().size() >= request.getCapacity()) {
-            // New capacity is < than the number of students already enrolled in this class
-            response = OpenEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.FULL_CLASS).build();
-        } else {
-            serverState.getStudentClass().openEnrollments(request.getCapacity());
-            response = OpenEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.OK).build();
+        ResponseCode code = ResponseCode.OK;
+
+        try {
+            Class studentClass = serverState.getStudentClass();
+            studentClass.openEnrollments(request.getCapacity());
+
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
+        } catch (EnrollmentsAlreadyOpenException e) {
+            code = ResponseCode.ENROLLMENTS_ALREADY_OPENED;
+
+        } catch (FullClassException e) {
+            code = ResponseCode.FULL_CLASS;
+
         }
+
+        response = OpenEnrollmentsResponse.newBuilder()
+                .setCode(code).build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
     @Override
     public void closeEnrollments(CloseEnrollmentsRequest request, StreamObserver<CloseEnrollmentsResponse> responseObserver) {
+
         CloseEnrollmentsResponse response;
-        if (!serverState.isActive()) {
-            response = CloseEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else if (!serverState.getStudentClass().areRegistrationsOpen()) {
-            response = CloseEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.ENROLLMENTS_ALREADY_CLOSED).build();
-        } else {
-            serverState.getStudentClass().closeEnrollments();
-            response = CloseEnrollmentsResponse.newBuilder()
-                    .setCode(ResponseCode.OK).build();
+        ResponseCode code = ResponseCode.OK;
+
+        try {
+            Class studentClass = serverState.getStudentClass();
+            studentClass.closeEnrollments();
+
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
+        } catch (EnrollmentsAlreadyClosedException e) {
+            code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+
         }
+
+        response = CloseEnrollmentsResponse.newBuilder()
+                .setCode(code).build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
     @Override
     public void listClass(ListClassRequest request, StreamObserver<ListClassResponse> responseObserver) {
+
         ListClassResponse response;
-        if (!serverState.isActive()) {
-            response = ListClassResponse.newBuilder()
-                    .setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else {
-            List<Student> enrolledStudents = serverState.getStudentClass().getEnrolledStudentsCollection().stream()
-                    .map(s -> Student.newBuilder().setStudentId(s.getId())
-                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        ResponseCode code = ResponseCode.OK;
 
-            List<Student> discardedStudents = serverState.getStudentClass().getRevokedStudentsCollection().stream()
-                    .map(s -> Student.newBuilder().setStudentId(s.getId())
-                            .setStudentName(s.getName()).build()).collect(Collectors.toList());
+        try {
+            Class studentClass = serverState.getStudentClass();
+            ClassState state = studentClass.getClassState();
 
-            ClassState state = ClassState.newBuilder().setCapacity(serverState.getStudentClass().getCapacity())
-                    .setOpenEnrollments(serverState.getStudentClass().areRegistrationsOpen())
-                    .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
-            response = ListClassResponse.newBuilder().setCode(ResponseCode.OK)
+            response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            return;
+
+        } catch (InactiveServerException e) {
+            code = ResponseCode.INACTIVE_SERVER;
+
         }
+
+        response = ListClassResponse.newBuilder()
+                .setCode(code).build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
     @Override
     public void cancelEnrollment(CancelEnrollmentRequest request, StreamObserver<CancelEnrollmentResponse> responseObserver) {
+
         CancelEnrollmentResponse response;
+        ResponseCode code = ResponseCode.OK;
+
         if (!ClassStudent.isValidStudentId(request.getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
             return;
-        } else if (!serverState.isActive()) {
-            response = CancelEnrollmentResponse.newBuilder()
-                    .setCode(ResponseCode.INACTIVE_SERVER).build();
-        } else if (!serverState.getStudentClass().isStudentEnrolled(request.getStudentId())) {
-            response = CancelEnrollmentResponse.newBuilder()
-                    .setCode(ResponseCode.NON_EXISTING_STUDENT).build();
-        } else {
-            serverState.getStudentClass().revokeEnrollment(request.getStudentId());
-            response = CancelEnrollmentResponse.newBuilder()
-                    .setCode(ResponseCode.OK).build();
         }
+
+        try {
+            Class studentClass = serverState.getStudentClass();
+            studentClass.revokeEnrollment(request.getStudentId());
+
+        } catch (InactiveServerException e)  {
+            code = ResponseCode.INACTIVE_SERVER;
+        } catch (NonExistingStudentException e) {
+            code = ResponseCode.NON_EXISTING_STUDENT;
+        }
+
+        response = CancelEnrollmentResponse.newBuilder()
+                .setCode(code).build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

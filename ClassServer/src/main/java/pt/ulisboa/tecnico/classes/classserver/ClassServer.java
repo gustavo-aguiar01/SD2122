@@ -4,9 +4,8 @@ import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
-import pt.ulisboa.tecnico.classes.classserver.implementations.*;
-
 import java.io.IOException;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 
 public class ClassServer {
 
@@ -25,7 +24,11 @@ public class ClassServer {
       this.studentClass = new Class();
     }
 
-    public Class getStudentClass() {
+    public Class getStudentClass() throws InactiveServerException {
+      if (! this.isActive()) {
+        throw new InactiveServerException();
+      }
+
       return studentClass;
     }
 

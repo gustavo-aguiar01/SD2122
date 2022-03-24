@@ -1,9 +1,12 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class Class {
 
@@ -72,7 +75,37 @@ public class Class {
         return enrolledStudents.size() >= capacity;
     }
 
-    public synchronized void enroll(ClassStudent student) {
+    public synchronized ClassesDefinitions.ClassState getClassState() {
+
+        List<ClassesDefinitions.Student> enrolledStudents = this.getEnrolledStudentsCollection().stream()
+                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+        List<ClassesDefinitions.Student> discardedStudents = this.getRevokedStudentsCollection().stream()
+                .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
+
+        ClassesDefinitions.ClassState state = ClassesDefinitions.ClassState.newBuilder().setCapacity(this.getCapacity())
+                .setOpenEnrollments(this.areRegistrationsOpen())
+                .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
+
+        return state;
+    }
+
+    public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
+
+        // realiability verification
+        if (! this.areRegistrationsOpen()) {
+            throw new EnrollmentsAlreadyClosedException();
+        }
+
+        if (this.isStudentEnrolled(student.getId())) {
+            throw new StudentAlreadyEnrolledException();
+        }
+
+        if (this.isFullClass()) {
+            throw new FullClassException();
+        }
 
         debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
                 (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity);
@@ -83,18 +116,40 @@ public class Class {
         }
     }
 
-    public void openEnrollments(int capacity) {
+    public void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
+
+        // realiability verification
+        if (this.areRegistrationsOpen()) {
+            throw new EnrollmentsAlreadyOpenException();
+        }
+
+        if (this.getEnrolledStudentsCollection().size() >= capacity) {
+            throw new FullClassException();
+        }
+
         setCapacity(capacity);
         setRegistrationsOpen(true);
         debug("Opened class enrollment registrations with capacity of " + capacity + "!");
     }
 
-    public void closeEnrollments() {
+    public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
+
+        // realiability verification
+        if (! this.areRegistrationsOpen()) {
+            throw new EnrollmentsAlreadyClosedException();
+        }
+
         setRegistrationsOpen(false);
         debug("Closed class enrollment registrations!");
     }
 
-    public void revokeEnrollment(String id) {
+    public void revokeEnrollment(String id) throws NonExistingStudentException {
+
+        // realiability verification
+        if (! this.isStudentEnrolled(id)) {
+            throw new NonExistingStudentException();
+        }
+
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
         debug("Revoked student " + id + "'s registration from class!");
