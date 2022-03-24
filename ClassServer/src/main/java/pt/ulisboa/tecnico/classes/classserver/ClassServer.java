@@ -23,7 +23,7 @@ public class ClassServer {
       this.studentClass = new Class();
     }
 
-    public synchronized Class getStudentClass() {
+    public Class getStudentClass() {
       return studentClass;
     }
 
@@ -45,7 +45,7 @@ public class ClassServer {
     }
 
     serverState = new ClassServerState();
-    port = Integer.valueOf(args[0]);
+    port = 8080;
 
     final BindableService adminImpl = new AdminServiceImpl(serverState);
     final BindableService professorImpl = new ProfessorServiceImpl(serverState);

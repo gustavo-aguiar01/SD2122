@@ -24,19 +24,19 @@ public class Class {
 
     public Class() {}
 
-    public int getCapacity() {
+    public synchronized int getCapacity() {
         return capacity;
     }
 
-    public void setCapacity(int capacity) {
+    public synchronized void setCapacity(int capacity) {
         this.capacity = capacity;
     }
 
-    public boolean areRegistrationsOpen() {
+    public synchronized boolean areRegistrationsOpen() {
         return registrationsOpen;
     }
 
-    public void setRegistrationsOpen(boolean openRegistrations) {
+    public synchronized void setRegistrationsOpen(boolean openRegistrations) {
         this.registrationsOpen = openRegistrations;
     }
 
@@ -68,11 +68,11 @@ public class Class {
         return enrolledStudents.containsKey(studentId);
     }
 
-    public boolean isFullClass() {
+    public synchronized boolean isFullClass() {
         return enrolledStudents.size() >= capacity;
     }
 
-    public void enroll(ClassStudent student) {
+    public synchronized void enroll(ClassStudent student) {
 
         debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
                 (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity);
