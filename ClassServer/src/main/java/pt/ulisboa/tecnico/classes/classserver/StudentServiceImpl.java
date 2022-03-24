@@ -26,6 +26,11 @@ public class StudentServiceImpl extends StudentServiceGrpc.StudentServiceImplBas
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer)")
                     .asRuntimeException());
+        } else if (ClassStudent.isValidStudentName((request.getStudent().getStudentName())) == false){
+            responseObserver.onError(INVALID_ARGUMENT
+                    .withDescription("Invalid student name input! Student name should have from 3 to 30 characters " +
+                            "including spaces")
+                    .asRuntimeException());
         } else {
             EnrollResponse response;
             if (serverState.isActive() == false) {

@@ -30,4 +30,8 @@ public class ClassStudent {
         return id.matches("^aluno\\d{4}$");
     }
 
+    public static boolean isValidStudentName(String name) {
+        return name.matches("^.{3,30}$");
+    }
+
 }
