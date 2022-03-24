@@ -74,23 +74,6 @@ public class Class {
         return enrolledStudents.size() >= capacity;
     }
 
-    public synchronized ClassState getClassState() {
-        // Construct ClassState
-        List<Student> enrolledStudents = this.getEnrolledStudentsCollection().stream()
-                .map(s -> Student.newBuilder().setStudentId(s.getId())
-                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
-
-        List<Student> discardedStudents = this.getRevokedStudentsCollection().stream()
-                .map(s -> Student.newBuilder().setStudentId(s.getId())
-                        .setStudentName(s.getName()).build()).collect(Collectors.toList());
-
-        ClassState state = ClassState.newBuilder().setCapacity(this.getCapacity())
-                .setOpenEnrollments(this.areRegistrationsOpen())
-                .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
-
-        return state;
-    }
-
     public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
         // realiability verification
