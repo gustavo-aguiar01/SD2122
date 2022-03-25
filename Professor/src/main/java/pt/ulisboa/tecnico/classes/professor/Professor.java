@@ -15,6 +15,12 @@ public class Professor {
   private static final String CANCEL_ENROLLMENT_CMD = "cancelEnrollment";
   private static final String EXIT_CMD = "exit";
 
+  /**
+   * Professor class main functionality
+   *  - Parse arguments
+   *  - Make remote calls
+   * @param args
+   */
   public static void main(String[] args) {
 
     // Argument validation

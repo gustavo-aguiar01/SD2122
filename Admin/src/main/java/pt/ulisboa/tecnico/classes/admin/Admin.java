@@ -5,6 +5,7 @@ import pt.ulisboa.tecnico.classes.ErrorMessage;
 import java.util.Scanner;
 import java.util.Arrays;
 
+
 public class Admin {
 
   private static final String EXIT_CMD = "exit";
@@ -12,6 +13,12 @@ public class Admin {
   private static final String DEACTIVATE_CMD = "deactivate";
   private static final String DUMP_CMD = "dump";
 
+  /**
+   * Admin class main functionality
+   *  - Parse arguments
+   *  - Make remote calls
+   * @param args
+   */
   public static void main(String[] args) {
 
     if (args.length > 1) {

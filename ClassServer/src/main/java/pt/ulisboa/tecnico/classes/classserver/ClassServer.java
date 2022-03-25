@@ -31,6 +31,13 @@ public class ClassServer {
       this.studentClass = new Class();
     }
 
+    /**
+     *  Student class getter, but only returns it if the server
+     *  is active (for non admin users)
+     * @param isAdmin
+     * @return Class
+     * @throws InactiveServerException
+     */
     public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
 
       DebugMessage.debug("Getting class, from" + (isAdmin ? " " : " non ") + "admin user", "getStudentClass", DEBUG_FLAG);
@@ -46,17 +53,34 @@ public class ClassServer {
       return studentClass;
     }
 
+    /**
+     * Set server availability
+     * @param active
+     */
     public synchronized void setActive(boolean active) {
 
       DebugMessage.debug("Server is now " + (active ? "active" : "inactive"), "setActive", DEBUG_FLAG);
       this.active = active;
 
     }
+
+    /**
+     * Checks if the server is active
+     * @return boolean
+     */
     public synchronized boolean isActive() {
       return active;
     }
   }
 
+  /**
+   * Server main functionality
+   *  - Parse arguments
+   *  - Process and respond to remote calls
+   * @param args
+   * @throws IOException
+   * @throws InterruptedException
+   */
   public static void main(String[] args) throws IOException, InterruptedException {
 
     System.out.println(ClassServer.class.getSimpleName());

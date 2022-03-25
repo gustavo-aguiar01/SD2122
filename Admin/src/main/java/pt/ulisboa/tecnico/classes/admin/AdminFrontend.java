@@ -26,6 +26,12 @@ public class AdminFrontend {
     }
 
     // admin remote methods
+
+    /**
+     * "activate" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String activate() throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
@@ -36,10 +42,16 @@ public class AdminFrontend {
 
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
 
+    /**
+     * "deactivate" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String deactivate() throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
@@ -49,10 +61,16 @@ public class AdminFrontend {
             DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
 
+    /**
+     * "dump" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String dump() throws RuntimeException {
 
         try {
@@ -72,10 +90,14 @@ public class AdminFrontend {
 
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
 
+    /**
+     * Communication channel shutdown function
+     */
     public void shutdown() {
         channel.shutdown();
     }

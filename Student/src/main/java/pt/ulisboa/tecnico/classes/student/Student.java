@@ -13,16 +13,34 @@ public class Student {
   private static final String LIST_CMD = "list";
   private static final String EXIT_CMD = "exit";
 
+  /**
+   * Student class main functionality
+   *  - Parse arguments
+   *  - Make remote calls
+   * @param args
+   */
   public static void main(String[] args) {
 
     Scanner scanner = new Scanner(System.in);
     if (args.length < 2) {
       ErrorMessage.fatalError("Invalid command expected : alunoXXXX <nome>*, where XXXX is 4 digit positive number" );
     }
+
+    int argsLength = args.length;
+    if (args[argsLength - 1].equals("-debug")) {
+      System.setProperty("debug", "true");
+      argsLength--;
+
+      /* Check if name and id where introduced and not just id + debug flag */
+      if (args.length < 3) {
+        ErrorMessage.fatalError("Invalid command expected : alunoXXXX <nome>* -debug, where XXXX is 4 digit positive number" );
+      }
+    }
+
     final String id = args[0];
 
     StringBuilder nameBuilder = new StringBuilder(args[1]);
-    for (int i = 2; i < args.length; i++) {
+    for (int i = 2; i < argsLength; i++) {
       nameBuilder.append(" " + args[i]);
     }
     final String name = nameBuilder.toString();

@@ -18,7 +18,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
     public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
         this.serverState = serverState;
     }
- 
+
+    /**
+     * "openEnrollments" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void openEnrollments(OpenEnrollmentsRequest request, StreamObserver<OpenEnrollmentsResponse> responseObserver) {
 
@@ -52,6 +57,11 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "closeEnrollments" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void closeEnrollments(CloseEnrollmentsRequest request, StreamObserver<CloseEnrollmentsResponse> responseObserver) {
 
@@ -77,6 +87,11 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "list" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void listClass(ListClassRequest request, StreamObserver<ListClassResponse> responseObserver) {
 
@@ -113,6 +128,11 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "cancelEnrollment" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void cancelEnrollment(CancelEnrollmentRequest request, StreamObserver<CancelEnrollmentResponse> responseObserver) {
 
