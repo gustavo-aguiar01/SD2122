@@ -42,7 +42,7 @@ mvn -version
 
 ### Installation
 
-To compile and install all modules:
+To compile and install all modules (in the project root directory):
 
 ```s
 mvn clean install
@@ -52,3 +52,27 @@ mvn clean install
 
 * [Maven](https://maven.apache.org/) - Build and dependency management tool;
 * [gRPC](https://grpc.io/) - RPC framework.
+
+## Usage
+
+To run all modules, run in each directory:
+
+(-debug is an optional debug flag, it is not a required argument)
+
+### Modules
+* ~/A25-Turmas/ClassServer: 
+```s
+mvn exec:java -Dexec.args="localhost 8080 P -debug"
+```
+* ~/A25-Turmas/Admin: 
+```s
+mvn exec:java -Dexec.args="[-debug]"
+```
+* ~/A25-Turmas/Professor:
+```s
+mvn exec:java -Dexec.args="[-debug]"
+```
+* ~/A25-Turmas/Student: 
+```s
+mvn exec:java -Dexec.args="<Student ID> <Student name> [-debug]"
+
