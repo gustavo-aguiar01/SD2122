@@ -1,103 +1,221 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Collection;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class Class {
 
-    int capacity;
+    volatile int capacity;
+    volatile boolean registrationsOpen = false;
+    volatile private ConcurrentHashMap<String, ClassStudent> enrolledStudents = new ConcurrentHashMap<String, ClassStudent>();
+    volatile private ConcurrentHashMap<String, ClassStudent> revokedStudents = new ConcurrentHashMap<String, ClassStudent>();
 
-    boolean registrationsOpen = false;
-    private ConcurrentHashMap<String, ClassStudent> enrolledStudents = new ConcurrentHashMap<String, ClassStudent>();
-    private ConcurrentHashMap<String, ClassStudent> revokedStudents = new ConcurrentHashMap<String, ClassStudent>();
+    /* To tackle the synchronization problem where a student enrolls and a professor decreases capacity */
+    ReentrantReadWriteLock capacityRestrictionLock = new ReentrantReadWriteLock();
 
-    /** Set flag to true to print debug messages.
-     * The flag can be set using the -Ddebug command line option. */
+    /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-
-    private static void debug(String debugMessage) {
-        if (DEBUG_FLAG)
-            System.err.println(debugMessage);
-    }
 
     public Class() {}
 
+    /**
+     * Getter for class capacity
+     * @return int
+     */
     public synchronized int getCapacity() {
         return capacity;
     }
 
+    /**
+     * Setter for class capacity
+     * @param capacity
+     */
     public synchronized void setCapacity(int capacity) {
         this.capacity = capacity;
     }
 
+    /**
+     * Check if registrations are open
+     * @return boolean
+     */
     public synchronized boolean areRegistrationsOpen() {
         return registrationsOpen;
     }
 
+    /**
+     * Set registrations state to openRegistrations
+     * @param openRegistrations
+     */
     public synchronized void setRegistrationsOpen(boolean openRegistrations) {
         this.registrationsOpen = openRegistrations;
     }
 
+    /**
+     * Getter of the collection of all enrolled students
+     * @return Collection<ClassStudent>
+     */
     public Collection<ClassStudent> getEnrolledStudentsCollection() {
         return this.enrolledStudents.values();
     }
 
+    /**
+     * Getter for the collection of all enrolled students
+     * @return ConcurrentHashMap<String, ClassStudent>
+     */
     public ConcurrentHashMap<String, ClassStudent> getEnrolledStudents() {
         return enrolledStudents;
     }
 
-    public void setEnrolledStudents(ConcurrentHashMap<String, ClassStudent> enrolledStudents) {
-        this.enrolledStudents = enrolledStudents;
-    }
 
+    /**
+     * Getter for the collection of all revoked students
+     * @return Collection<ClassStudent>
+     */
     public Collection<ClassStudent> getRevokedStudentsCollection() {
         return this.revokedStudents.values();
     }
 
+    /**
+     * Getter for the collection of all revoked students
+     * @return ConcurrentHashMap<String, ClassStudent>
+     */
     public ConcurrentHashMap<String, ClassStudent> getRevokedStudents() {
         return revokedStudents;
     }
 
-    public void setRevokedStudents(ConcurrentHashMap<String, ClassStudent> revokedStudents) {
-        this.revokedStudents = revokedStudents;
-    }
-
+    /**
+     * Check if a student with a given ID is enrolled in this class
+     * @param studentId
+     * @return boolean
+     */
     public boolean isStudentEnrolled(String studentId) {
         return enrolledStudents.containsKey(studentId);
     }
 
+    /**
+     * Check if the class is full
+     * @return boolean
+     */
     public synchronized boolean isFullClass() {
         return enrolledStudents.size() >= capacity;
     }
 
-    public synchronized void enroll(ClassStudent student) {
+    /**
+     * Enroll a student in this class
+     * @param student
+     * @throws EnrollmentsAlreadyClosedException
+     * @throws StudentAlreadyEnrolledException
+     * @throws FullClassException
+     */
+    public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
-        debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
-                (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity);
-
-        if (registrationsOpen == true && isFullClass() == false) {
-            enrolledStudents.put(student.getId(), student);
-            debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName());
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " +
+                (openRegistrations ? "open" : "closed"), "enroll", DEBUG_FLAG);
+        if (!openRegistrations) {
+            throw new EnrollmentsAlreadyClosedException();
         }
+
+        boolean studentEnrolled = this.isStudentEnrolled(student.getId());
+        DebugMessage.debug("Student is " +
+                (studentEnrolled ? "" : "not") + " enrolled", null, DEBUG_FLAG);
+        if (studentEnrolled) {
+            throw new StudentAlreadyEnrolledException();
+        }
+
+        capacityRestrictionLock.writeLock().lock();
+        boolean fullClass = this.isFullClass();
+        DebugMessage.debug("Class is " +
+                (!fullClass ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
+        if (fullClass) {
+            capacityRestrictionLock.writeLock().unlock();
+            throw new FullClassException();
+        }
+
+        enrolledStudents.put(student.getId(), student);
+        capacityRestrictionLock.writeLock().unlock();
+
+        DebugMessage.debug("Enrolled student with id: " + student.getId()
+                + " and name: " + student.getName(), null, DEBUG_FLAG);
+
     }
 
-    public void openEnrollments(int capacity) {
+
+    /**
+     * Open class for student enrollments
+     * @param capacity
+     * @throws EnrollmentsAlreadyOpenException
+     * @throws FullClassException
+     */
+    public synchronized void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
+
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " +
+                (openRegistrations ? "open" : "closed"), "openEnrollments", DEBUG_FLAG);
+        if (openRegistrations) {
+            throw new EnrollmentsAlreadyOpenException();
+        }
+
+        capacityRestrictionLock.writeLock().lock();
+        boolean fullClass = this.getEnrolledStudentsCollection().size() >= capacity;
+        DebugMessage.debug("Class is " +
+                (registrationsOpen ? "" : "not") + " full, capacity = " +
+                enrolledStudents.size(), null, DEBUG_FLAG);
+        if (fullClass) {
+            capacityRestrictionLock.writeLock().unlock();
+            throw new FullClassException();
+        }
+
         setCapacity(capacity);
+        capacityRestrictionLock.writeLock().unlock();
+
         setRegistrationsOpen(true);
-        debug("Opened class enrollment registrations with capacity of " + capacity + "!");
+        DebugMessage.debug("Opened class enrollment registrations with capacity of " +
+                capacity + "!", null, DEBUG_FLAG);
     }
 
-    public void closeEnrollments() {
+    /**
+     * Close class for student enrollments
+     * @throws EnrollmentsAlreadyClosedException
+     */
+    public synchronized void closeEnrollments() throws EnrollmentsAlreadyClosedException {
+
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " +
+                (openRegistrations ? "open" : "closed"), "closeEnrollments", DEBUG_FLAG);
+        if (!openRegistrations) {
+            throw new EnrollmentsAlreadyClosedException();
+        }
+
         setRegistrationsOpen(false);
-        debug("Closed class enrollment registrations!");
+
+        DebugMessage.debug("Closed class enrollment registrations!", null, DEBUG_FLAG);
     }
 
-    public void revokeEnrollment(String id) {
+    /**
+     * Revoke a student enrollment
+     * @param id
+     * @throws NonExistingStudentException
+     */
+    public synchronized void revokeEnrollment(String id) throws NonExistingStudentException {
+
+        boolean studentEnroled = this.isStudentEnrolled(id);
+        DebugMessage.debug("Student with id = " + id + " is " +
+                (studentEnroled ? "" : "not") + " enrolled in this class", "revokeEnrollment", DEBUG_FLAG);
+        if (!this.isStudentEnrolled(id)) {
+            throw new NonExistingStudentException();
+        }
+
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
-        debug("Revoked student " + id + "'s registration from class!");
+
+        DebugMessage.debug("Revoked student " + id +
+                "'s registration from class!", null, DEBUG_FLAG);
     }
 
 }

@@ -1,33 +1,51 @@
 package pt.ulisboa.tecnico.classes.student;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
+import pt.ulisboa.tecnico.classes.ErrorMessage;
 
 import java.util.Scanner;
 
 public class Student {
 
-  private static final String HOST = "localhost";
-  private static final int port = 8080;
+  private static final String HOSTNAME = "localhost";
+  private static final int PORT_NUMBER = 8080;
 
   private static final String ENROLL_CMD = "enroll";
   private static final String LIST_CMD = "list";
   private static final String EXIT_CMD = "exit";
 
+  /**
+   * Student class main functionality
+   *  - Parse arguments
+   *  - Make remote calls
+   * @param args
+   */
   public static void main(String[] args) {
 
     Scanner scanner = new Scanner(System.in);
+    if (args.length < 2) {
+      ErrorMessage.fatalError("Invalid command expected : alunoXXXX <nome>*, where XXXX is 4 digit positive number" );
+    }
+
+    int argsLength = args.length;
+    if (args[argsLength - 1].equals("-debug")) {
+      System.setProperty("debug", "true");
+      argsLength--;
+
+      /* Check if name and id where introduced and not just id + debug flag */
+      if (args.length < 3) {
+        ErrorMessage.fatalError("Invalid command expected : alunoXXXX <nome>* -debug, where XXXX is 4 digit positive number" );
+      }
+    }
 
     final String id = args[0];
+
     StringBuilder nameBuilder = new StringBuilder(args[1]);
-    for (int i = 2; i < args.length; i++) {
+    for (int i = 2; i < argsLength; i++) {
       nameBuilder.append(" " + args[i]);
     }
     final String name = nameBuilder.toString();
 
-    final ManagedChannel channel = ManagedChannelBuilder.forAddress(HOST, port).usePlaintext().build();
-    final StudentFrontend studentFrontend = new StudentFrontend(channel);
+    final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER);
 
     while (true) {
       System.out.printf("> ");
@@ -36,27 +54,28 @@ public class Student {
       if (ENROLL_CMD.equals(line)) {
         try {
           System.out.println(studentFrontend.enroll(id, name));
-        } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " +
-                  e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
       if (LIST_CMD.equals(line)) {
         try {
           System.out.println(studentFrontend.listClass());
-        } catch (StatusRuntimeException e) {
-          System.out.println("ERROR: " +
-                  e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
       if (EXIT_CMD.equals(line)) {
-        break;
+        studentFrontend.shutdown();
+        scanner.close();
+        System.exit(0);
       }
 
       System.out.printf("%n");
     }
-    channel.shutdown();
   }
 }
