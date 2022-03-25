@@ -14,8 +14,12 @@ public class Admin {
 
   public static void main(String[] args) {
 
-    if (args.length != 0) {
+    if (args.length > 1) {
       ErrorMessage.fatalError("No arguments needed.");
+    }
+
+    if (args.length == 1 && args[0].equals("-debug")) {
+      System.setProperty("debug", "true");
     }
 
     final String host = "localhost";

@@ -40,7 +40,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
 
             String id = request.getStudent().getStudentId();
             String name = request.getStudent().getStudentName();
@@ -77,7 +77,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
 
             // Construct ClassState
             List<Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()

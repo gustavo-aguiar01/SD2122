@@ -31,10 +31,10 @@ public class ClassServer {
       this.studentClass = new Class();
     }
 
-    public Class getStudentClass() throws InactiveServerException {
+    public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
 
       /* Can only access server contents if the server is active */
-      if (! this.isActive()) {
+      if (! isAdmin && ! this.isActive()) {
         throw new InactiveServerException();
       }
 
@@ -75,7 +75,6 @@ public class ClassServer {
     }
 
     if (args.length == 4 && args[3].equals("-debug")) {
-      // TODO : Does the debug property value matter?
       System.setProperty("debug", "true");
     }
 

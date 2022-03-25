@@ -32,7 +32,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
             studentClass.openEnrollments(request.getCapacity());
 
         } catch (InactiveServerException e) {
@@ -60,7 +60,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
             studentClass.closeEnrollments();
 
         } catch (InactiveServerException e) {
@@ -85,7 +85,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
 
             // Construct ClassState
             List<ClassesDefinitions.Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
@@ -131,7 +131,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-            Class studentClass = serverState.getStudentClass();
+            Class studentClass = serverState.getStudentClass(false);
             studentClass.revokeEnrollment(request.getStudentId());
 
         } catch (InactiveServerException e)  {
