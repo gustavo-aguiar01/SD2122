@@ -2,9 +2,11 @@ package pt.ulisboa.tecnico.classes;
 
 public class DebugMessage {
 
-    public static void debug(String debugMessage, boolean debugFlag) {
+    public static void debug(String debugMessage, String function, boolean debugFlag) {
         if (debugFlag) {
-            System.err.println("Debug : ");
+            if (function != null)
+                System.err.println("Debug (" + function + ") : ");
+
             System.err.println("    - "  + debugMessage);
         }
     }

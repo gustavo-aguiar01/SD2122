@@ -19,7 +19,9 @@ public class Student {
   public static void main(String[] args) {
 
     Scanner scanner = new Scanner(System.in);
-
+    if (args.length < 2) {
+      ErrorMessage.fatalError("Invalid command expected : alunoXXXX <nome>*, where XXXX is 4 digit positive number" );
+    }
     final String id = args[0];
 
     StringBuilder nameBuilder = new StringBuilder(args[1]);

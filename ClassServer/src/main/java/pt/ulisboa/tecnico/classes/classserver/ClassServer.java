@@ -27,7 +27,7 @@ public class ClassServer {
 
     public ClassServerState (String primary) {
       this.active = true;
-      this.primary = primary == "P";
+      this.primary = primary.equals("P");
       this.studentClass = new Class();
     }
 
@@ -54,7 +54,7 @@ public class ClassServer {
     System.out.println(ClassServer.class.getSimpleName());
     System.out.printf("Received %d Argument(s)%n", args.length);
 
-    if (args.length != 3) {
+    if (args.length < 3 || args.length > 4) {
       ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
     }
 
@@ -66,12 +66,17 @@ public class ClassServer {
       ErrorMessage.fatalError("Invalid port number");
     }
 
-    if (1024 <= port && port <= 65535) {
+    if (! (1024 <= port && port <= 65535)) {
       ErrorMessage.fatalError("Invalid port number");
     }
 
-    if (! (args[2] == "P" || args[2] == "S")) {
+    if (! (args[2].equals("P") || args[2].equals("S"))) {
       ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
+    }
+
+    if (args.length == 4 && args[3].equals("-debug")) {
+      // TODO : Does the debug property value matter?
+      System.setProperty("debug", "true");
     }
 
     serverState = new ClassServerState(args[2]);

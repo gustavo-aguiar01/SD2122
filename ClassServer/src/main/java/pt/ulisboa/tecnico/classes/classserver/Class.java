@@ -70,64 +70,76 @@ public class Class {
     public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
         // realiability verification
-        if (! this.areRegistrationsOpen()) {
+
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "enroll", DEBUG_FLAG);
+        if (! openRegistrations) {
             throw new EnrollmentsAlreadyClosedException();
         }
 
-        if (this.isStudentEnrolled(student.getId())) {
+        boolean studentEnrolled = this.isStudentEnrolled(student.getId());
+        DebugMessage.debug("Student is " + (studentEnrolled ? "" : "not") + " enrolled", null, DEBUG_FLAG);
+        if (studentEnrolled) {
             throw new StudentAlreadyEnrolledException();
         }
 
-        if (this.isFullClass()) {
+        boolean fullClass = this.isFullClass();
+        DebugMessage.debug("Class is " + (registrationsOpen ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
+        if (fullClass) {
             throw new FullClassException();
         }
 
-        DebugMessage.debug("Registrations are " + (registrationsOpen ? "open" : "closed") + " and there are " +
-                (enrolledStudents.size()) + " enrolled students in a class with capacity " + capacity, DEBUG_FLAG);
-
         if (registrationsOpen == true && isFullClass() == false) {
             enrolledStudents.put(student.getId(), student);
-            DebugMessage.debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName(), DEBUG_FLAG);
+            DebugMessage.debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName(), null, DEBUG_FLAG);
         }
     }
 
     public void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
 
         // realiability verification
-        if (this.areRegistrationsOpen()) {
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "openEnrollments", DEBUG_FLAG);
+        if (openRegistrations) {
             throw new EnrollmentsAlreadyOpenException();
         }
 
-        if (this.getEnrolledStudentsCollection().size() >= capacity) {
+        boolean fullClass = this.getEnrolledStudentsCollection().size() >= capacity;
+        DebugMessage.debug("Class is " + (registrationsOpen ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
+        if (fullClass) {
             throw new FullClassException();
         }
 
         setCapacity(capacity);
         setRegistrationsOpen(true);
-        DebugMessage.debug("Opened class enrollment registrations with capacity of " + capacity + "!", DEBUG_FLAG);
+        DebugMessage.debug("Opened class enrollment registrations with capacity of " + capacity + "!", null, DEBUG_FLAG);
     }
 
     public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
 
         // realiability verification
-        if (! this.areRegistrationsOpen()) {
+        boolean openRegistrations = this.areRegistrationsOpen();
+        DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "closeEnrollments", DEBUG_FLAG);
+        if (! openRegistrations) {
             throw new EnrollmentsAlreadyClosedException();
         }
 
         setRegistrationsOpen(false);
-        DebugMessage.debug("Closed class enrollment registrations!", DEBUG_FLAG);
+        DebugMessage.debug("Closed class enrollment registrations!", null, DEBUG_FLAG);
     }
 
     public void revokeEnrollment(String id) throws NonExistingStudentException {
 
         // realiability verification
+        boolean studentEnroled = this.isStudentEnrolled(id);
+        DebugMessage.debug("Student with id = " + id + " is " + (studentEnroled ? "" : "not") + " enrolled in this class", "revokeEnrollment", DEBUG_FLAG);
         if (! this.isStudentEnrolled(id)) {
             throw new NonExistingStudentException();
         }
 
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
-        DebugMessage.debug("Revoked student " + id + "'s registration from class!", DEBUG_FLAG);
+        DebugMessage.debug("Revoked student " + id + "'s registration from class!", null, DEBUG_FLAG);
     }
 
 }
