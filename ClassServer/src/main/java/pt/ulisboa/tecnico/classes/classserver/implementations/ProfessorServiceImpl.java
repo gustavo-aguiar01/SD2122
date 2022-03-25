@@ -3,7 +3,6 @@ package pt.ulisboa.tecnico.classes.classserver;
 import io.grpc.stub.StreamObserver;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;
@@ -88,12 +87,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             Class studentClass = serverState.getStudentClass(false);
 
             // Construct ClassState
-            List<ClassesDefinitions.Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
-                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+            List<Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
                             .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-            List<ClassesDefinitions.Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
-                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+            List<Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
                             .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -103,17 +102,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            return;
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
+            response = ListClassResponse.newBuilder()
+                    .setCode(code).build();
         }
-
-        response = ListClassResponse.newBuilder()
-                .setCode(code).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

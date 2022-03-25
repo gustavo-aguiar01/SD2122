@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.classes.professor;
 
-import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 
 import java.util.Scanner;

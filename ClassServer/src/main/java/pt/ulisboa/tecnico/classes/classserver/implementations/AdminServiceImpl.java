@@ -7,7 +7,6 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 
-
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceImplBase;
 
@@ -43,13 +42,13 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     }
 
     @Override
-    public void dump (DumpRequest request, StreamObserver<DumpResponse> responseObserver) {
+    public void dump(DumpRequest request, StreamObserver<DumpResponse> responseObserver) {
 
         DumpResponse response;
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(true);
+            Class studentClass = serverState.getStudentClass(false);
 
             // Construct ClassState
             List<ClassesDefinitions.Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
@@ -64,21 +63,15 @@ public class AdminServiceImpl extends AdminServiceImplBase {
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
                     .addAllEnrolled(enrolledStudents).addAllDiscarded(discardedStudents).build();
 
-
             response = DumpResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            return;
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
+            response = DumpResponse.newBuilder()
+                    .setCode(code).build();
         }
-
-        response = DumpResponse.newBuilder()
-                .setCode(code).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
