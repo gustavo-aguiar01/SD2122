@@ -100,8 +100,9 @@ public class Class {
             throw new EnrollmentsAlreadyOpenException();
         }
 
+        boolean fullClass = this.getEnrolledStudentsCollection().size() >= capacity;
         DebugMessage.debug("Class is " + (registrationsOpen ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
-        if (isFullClass()) {
+        if (fullClass) {
             throw new FullClassException();
         }
 
