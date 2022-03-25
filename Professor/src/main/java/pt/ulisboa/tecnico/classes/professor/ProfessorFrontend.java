@@ -23,6 +23,12 @@ public class ProfessorFrontend {
         stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
+    /**
+     * "openEnrollments" client remote call facade
+     * @param capacity
+     * @return String
+     * @throws RuntimeException
+     */
     public String openEnrollments(int capacity) throws RuntimeException {
 
         try {
@@ -35,13 +41,19 @@ public class ProfessorFrontend {
             return message;
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                DebugMessage.debug("Invalid arguments passed", null, DEBUG_FLAG);
                 return e.getStatus().getDescription();
             } else {
+                DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
                 throw new RuntimeException(e.getStatus().getDescription());
             }
         }
     }
 
+    /**
+     * "closeEnrollments" client remote call facade
+     * @return String
+     */
     public String closeEnrollments() {
         try {
             DebugMessage.debug("Calling remote call closeEnrollments", "closeEnrollments", DEBUG_FLAG);
@@ -51,10 +63,15 @@ public class ProfessorFrontend {
             DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
             return message;
         } catch (StatusRuntimeException e) {
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
 
+    /**
+     * "list" client remote call facade
+     * @return String
+     */
     public String listClass() {
 
         try {
@@ -70,10 +87,17 @@ public class ProfessorFrontend {
             DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
             return Stringify.format(response.getClassState());
         } catch (StatusRuntimeException e) {
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
 
+    /**
+     * "cancelEnrollments" client remote call facade
+     * @param id
+     * @return
+     * @throws RuntimeException
+     */
     public String cancelEnrollment(String id) throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call cancelEnrollment", "cancelEnrollment", DEBUG_FLAG);
@@ -85,13 +109,18 @@ public class ProfessorFrontend {
             return message;
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                DebugMessage.debug("Invalid arguments passed", null, DEBUG_FLAG);
                 return e.getStatus().getDescription();
             } else {
+                DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
                 throw new RuntimeException(e.getStatus().getDescription());
             }
         }
     }
 
+    /**
+     * Communication channel shutdown function
+     */
     public void shutdown() {
         channel.shutdown();
     }

@@ -22,6 +22,11 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         this.serverState = serverState;
     }
 
+    /**
+     * "activate" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void activate (ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
 
@@ -32,6 +37,11 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "deactivate" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void deactivate (DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
 
@@ -42,6 +52,11 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "dump" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void dump (DumpRequest request, StreamObserver<DumpResponse> responseObserver) {
 

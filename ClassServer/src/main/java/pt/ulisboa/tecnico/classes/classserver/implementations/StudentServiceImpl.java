@@ -22,6 +22,11 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         this.serverState = serverState;
     }
 
+    /**
+     * "enroll" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void enroll(EnrollRequest request, StreamObserver<EnrollResponse> responseObserver) {
 
@@ -71,6 +76,11 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
     }
 
+    /**
+     * "list" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void listClass(ListClassRequest request, StreamObserver<ListClassResponse> responseObserver) {
 
