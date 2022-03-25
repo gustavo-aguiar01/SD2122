@@ -63,7 +63,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            Class studentClass = serverState.getStudentClass(true);
 
             // Construct ClassState
             List<ClassesDefinitions.Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
