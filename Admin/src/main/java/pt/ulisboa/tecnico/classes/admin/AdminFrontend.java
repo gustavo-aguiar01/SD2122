@@ -36,6 +36,7 @@ public class AdminFrontend {
 
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
@@ -49,6 +50,7 @@ public class AdminFrontend {
             DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
@@ -72,6 +74,7 @@ public class AdminFrontend {
 
             return message;
         } catch (StatusRuntimeException e){
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }

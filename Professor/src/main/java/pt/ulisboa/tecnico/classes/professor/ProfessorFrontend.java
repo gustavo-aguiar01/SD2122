@@ -35,8 +35,10 @@ public class ProfessorFrontend {
             return message;
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                DebugMessage.debug("Invalid arguments passed", null, DEBUG_FLAG);
                 return e.getStatus().getDescription();
             } else {
+                DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
                 throw new RuntimeException(e.getStatus().getDescription());
             }
         }
@@ -51,6 +53,7 @@ public class ProfessorFrontend {
             DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
             return message;
         } catch (StatusRuntimeException e) {
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
@@ -70,6 +73,7 @@ public class ProfessorFrontend {
             DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
             return Stringify.format(response.getClassState());
         } catch (StatusRuntimeException e) {
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
         }
     }
@@ -85,8 +89,10 @@ public class ProfessorFrontend {
             return message;
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                DebugMessage.debug("Invalid arguments passed", null, DEBUG_FLAG);
                 return e.getStatus().getDescription();
             } else {
+                DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
                 throw new RuntimeException(e.getStatus().getDescription());
             }
         }
