@@ -13,6 +13,12 @@ public class Student {
   private static final String LIST_CMD = "list";
   private static final String EXIT_CMD = "exit";
 
+  /**
+   * Student class main functionality
+   *  - Parse arguments
+   *  - Make remote calls
+   * @param args
+   */
   public static void main(String[] args) {
 
     Scanner scanner = new Scanner(System.in);

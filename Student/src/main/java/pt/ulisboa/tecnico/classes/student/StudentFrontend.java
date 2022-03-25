@@ -25,6 +25,13 @@ public class StudentFrontend {
         stub = StudentServiceGrpc.newBlockingStub(channel);
     }
 
+    /**
+     * "enroll" client remote call facade
+     * @param id
+     * @param name
+     * @return String
+     * @throws RuntimeException
+     */
     public String enroll(String id, String name) throws RuntimeException {
 
         try {
@@ -47,6 +54,11 @@ public class StudentFrontend {
         }
     }
 
+    /**
+     * "list" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String listClass() throws RuntimeException {
 
         try {
@@ -70,6 +82,9 @@ public class StudentFrontend {
         }
     }
 
+    /**
+     * Communication channel shutdown function
+     */
     public void shutdown() {
         channel.shutdown();
     }

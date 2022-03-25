@@ -26,6 +26,12 @@ public class AdminFrontend {
     }
 
     // admin remote methods
+
+    /**
+     * "activate" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String activate() throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
@@ -41,6 +47,11 @@ public class AdminFrontend {
         }
     }
 
+    /**
+     * "deactivate" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String deactivate() throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
@@ -55,6 +66,11 @@ public class AdminFrontend {
         }
     }
 
+    /**
+     * "dump" client remote call facade
+     * @return String
+     * @throws RuntimeException
+     */
     public String dump() throws RuntimeException {
 
         try {
@@ -79,6 +95,9 @@ public class AdminFrontend {
         }
     }
 
+    /**
+     * Communication channel shutdown function
+     */
     public void shutdown() {
         channel.shutdown();
     }

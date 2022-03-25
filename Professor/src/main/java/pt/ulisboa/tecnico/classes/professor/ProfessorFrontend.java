@@ -23,6 +23,12 @@ public class ProfessorFrontend {
         stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
+    /**
+     * "openEnrollments" client remote call facade
+     * @param capacity
+     * @return String
+     * @throws RuntimeException
+     */
     public String openEnrollments(int capacity) throws RuntimeException {
 
         try {
@@ -44,6 +50,10 @@ public class ProfessorFrontend {
         }
     }
 
+    /**
+     * "closeEnrollments" client remote call facade
+     * @return String
+     */
     public String closeEnrollments() {
         try {
             DebugMessage.debug("Calling remote call closeEnrollments", "closeEnrollments", DEBUG_FLAG);
@@ -58,6 +68,10 @@ public class ProfessorFrontend {
         }
     }
 
+    /**
+     * "list" client remote call facade
+     * @return String
+     */
     public String listClass() {
 
         try {
@@ -78,6 +92,12 @@ public class ProfessorFrontend {
         }
     }
 
+    /**
+     * "cancelEnrollments" client remote call facade
+     * @param id
+     * @return
+     * @throws RuntimeException
+     */
     public String cancelEnrollment(String id) throws RuntimeException {
         try {
             DebugMessage.debug("Calling remote call cancelEnrollment", "cancelEnrollment", DEBUG_FLAG);
@@ -98,6 +118,9 @@ public class ProfessorFrontend {
         }
     }
 
+    /**
+     * Communication channel shutdown function
+     */
     public void shutdown() {
         channel.shutdown();
     }
