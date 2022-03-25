@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.classes.admin;
 
+import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
@@ -25,46 +26,57 @@ public class AdminFrontend {
     }
 
     // admin remote methods
-    public String activate () {
+    public String activate() throws RuntimeException {
+        try {
+            DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
+            ResponseCode responseCode = stub.activate(ActivateRequest.getDefaultInstance()).getCode();
 
-        DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
-        ResponseCode responseCode = stub.activate(ActivateRequest.getDefaultInstance()).getCode();
+            String message = Stringify.format(responseCode);
+            DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
 
-        String message = Stringify.format(responseCode);
-        DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
-
-        return message;
-    }
-
-    public String deactivate () {
-
-        DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
-        ResponseCode responseCode = stub.deactivate(DeactivateRequest.getDefaultInstance()).getCode();
-
-        String message = Stringify.format(responseCode);
-        DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
-
-
-        return message;
-    }
-
-    public String dump () {
-
-        DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
-        DumpResponse response = stub.dump(DumpRequest.getDefaultInstance());
-        ResponseCode code = response.getCode();
-        DebugMessage.debug("Got the following response code : " + Stringify.format(code), null, DEBUG_FLAG);
-
-
-        String message;
-        if (code == ResponseCode.OK) {
-            message = Stringify.format(response.getClassState());
-            DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
-
-        } else {
-            message = Stringify.format(code);
+            return message;
+        } catch (StatusRuntimeException e){
+            throw new RuntimeException(e.getStatus().getDescription());
         }
+    }
 
-        return message;
+    public String deactivate() throws RuntimeException {
+        try {
+            DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
+            ResponseCode responseCode = stub.deactivate(DeactivateRequest.getDefaultInstance()).getCode();
+
+            String message = Stringify.format(responseCode);
+            DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
+            return message;
+        } catch (StatusRuntimeException e){
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+    }
+
+    public String dump() throws RuntimeException {
+
+        try {
+            DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
+            DumpResponse response = stub.dump(DumpRequest.getDefaultInstance());
+            ResponseCode code = response.getCode();
+            DebugMessage.debug("Got the following response code : " + Stringify.format(code), null, DEBUG_FLAG);
+
+            String message;
+            if (code == ResponseCode.OK) {
+                message = Stringify.format(response.getClassState());
+                DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
+
+            } else {
+                message = Stringify.format(code);
+            }
+
+            return message;
+        } catch (StatusRuntimeException e){
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+    }
+
+    public void shutdown() {
+        channel.shutdown();
     }
 }

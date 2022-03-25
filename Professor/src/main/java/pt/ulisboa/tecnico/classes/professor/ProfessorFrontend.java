@@ -1,6 +1,10 @@
 package pt.ulisboa.tecnico.classes.professor;
 
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
@@ -9,59 +13,87 @@ import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 
 public class ProfessorFrontend {
     private final ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
+    private final ManagedChannel channel;
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    public ProfessorFrontend(ManagedChannel channel) {
+    public ProfessorFrontend(String hostname, int port) {
+        channel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
         stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
-    public String openEnrollments(int capacity) {
+    public String openEnrollments(int capacity) throws RuntimeException {
 
-        DebugMessage.debug("Calling remote call openEnrollments", "openEnrollments", DEBUG_FLAG);
-        ProfessorClassServer.OpenEnrollmentsResponse responseOpenEnrollments = stub.openEnrollments(
-                ProfessorClassServer.OpenEnrollmentsRequest.newBuilder().setCapacity(capacity).build());
+        try {
+            DebugMessage.debug("Calling remote call openEnrollments", "openEnrollments", DEBUG_FLAG);
+            ProfessorClassServer.OpenEnrollmentsResponse responseOpenEnrollments = stub.openEnrollments(
+                    ProfessorClassServer.OpenEnrollmentsRequest.newBuilder().setCapacity(capacity).build());
 
-        String message = Stringify.format(responseOpenEnrollments.getCode());
-        DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
-        return message;
+            String message = Stringify.format(responseOpenEnrollments.getCode());
+            DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
+            return message;
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                return e.getStatus().getDescription();
+            } else {
+                throw new RuntimeException(e.getStatus().getDescription());
+            }
+        }
     }
 
     public String closeEnrollments() {
+        try {
+            DebugMessage.debug("Calling remote call closeEnrollments", "closeEnrollments", DEBUG_FLAG);
+            ProfessorClassServer.CloseEnrollmentsResponse responseCloseEnrollments = stub.closeEnrollments(ProfessorClassServer.CloseEnrollmentsRequest.getDefaultInstance());
 
-        DebugMessage.debug("Calling remote call closeEnrollments", "closeEnrollments", DEBUG_FLAG);
-        ProfessorClassServer.CloseEnrollmentsResponse responseCloseEnrollments = stub.closeEnrollments(ProfessorClassServer.CloseEnrollmentsRequest.getDefaultInstance());
-
-        String message = Stringify.format(responseCloseEnrollments.getCode());
-        DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
-        return message;
+            String message = Stringify.format(responseCloseEnrollments.getCode());
+            DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
+            return message;
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
     }
 
     public String listClass() {
 
-        DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);
-        ProfessorClassServer.ListClassResponse response = stub.listClass(ProfessorClassServer.ListClassRequest.getDefaultInstance());
+        try {
+            DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);
+            ProfessorClassServer.ListClassResponse response = stub.listClass(ProfessorClassServer.ListClassRequest.getDefaultInstance());
 
-        String message = Stringify.format(response.getCode());
-        DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
-        if (response.getCode() != ClassesDefinitions.ResponseCode.OK) {
-            return Stringify.format(response.getCode());
+            String message = Stringify.format(response.getCode());
+            DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
+            if (response.getCode() != ClassesDefinitions.ResponseCode.OK) {
+                return Stringify.format(response.getCode());
+            }
+
+            DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
+            return Stringify.format(response.getClassState());
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
         }
-
-        DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
-        return Stringify.format(response.getClassState());
     }
 
-    public String cancelEnrollment(String id) {
+    public String cancelEnrollment(String id) throws RuntimeException {
+        try {
+            DebugMessage.debug("Calling remote call cancelEnrollment", "cancelEnrollment", DEBUG_FLAG);
+            ProfessorClassServer.CancelEnrollmentResponse responseCancelEnrollments = stub.cancelEnrollment(
+                    ProfessorClassServer.CancelEnrollmentRequest.newBuilder().setStudentId(id).build());
 
-        DebugMessage.debug("Calling remote call cancelEnrollment", "cancelEnrollment", DEBUG_FLAG);
-        ProfessorClassServer.CancelEnrollmentResponse responseCancelEnrollments = stub.cancelEnrollment(
-                ProfessorClassServer.CancelEnrollmentRequest.newBuilder().setStudentId(id).build());
+            String message = Stringify.format(responseCancelEnrollments.getCode());
+            DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
+            return message;
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
+                return e.getStatus().getDescription();
+            } else {
+                throw new RuntimeException(e.getStatus().getDescription());
+            }
+        }
+    }
 
-        String message = Stringify.format(responseCancelEnrollments.getCode());
-        DebugMessage.debug("Got the following response code : " + message, null, DEBUG_FLAG);
-        return message;
+    public void shutdown() {
+        channel.shutdown();
     }
 
 }

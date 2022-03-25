@@ -10,8 +10,6 @@ import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 
-
-/* Representation of the server state */
 public class ClassServer {
 
   /* Server host port. */
@@ -35,11 +33,11 @@ public class ClassServer {
 
     public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
 
-      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : "non ") + "admin user", "getStudentClass", DEBUG_FLAG);
-      DebugMessage.debug("The server is" + (isAdmin ? " " : "not ") + " active", null, DEBUG_FLAG);
+      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : " non ") + "admin user", "getStudentClass", DEBUG_FLAG);
+      DebugMessage.debug("The server is" + (isActive() ? " " : " not ") + "active", null, DEBUG_FLAG);
 
       /* Can only access server contents if the server is active */
-      if (! isAdmin && ! this.isActive()) {
+      if (!isAdmin && !this.isActive()) {
         DebugMessage.debug("It's not possible to obtain student class", null, DEBUG_FLAG);
         throw new InactiveServerException();
       }
@@ -76,7 +74,7 @@ public class ClassServer {
       ErrorMessage.fatalError("Invalid port number");
     }
 
-    if (! (1024 <= port && port <= 65535)) {
+    if (!(1024 <= port && port <= 65535)) {
       ErrorMessage.fatalError("Invalid port number");
     }
 
@@ -93,7 +91,6 @@ public class ClassServer {
     }
 
     serverState = new ClassServerState(args[2]);
-
 
     for (int i = 0; i < args.length; i++) {
       System.out.printf("args[%d] = %s%n", i, args[i]);

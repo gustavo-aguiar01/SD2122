@@ -29,11 +29,13 @@ public class StudentServiceImpl extends StudentServiceImplBase {
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer)")
                     .asRuntimeException());
+            return ;
         } else if (ClassStudent.isValidStudentName((request.getStudent().getStudentName())) == false){
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("Invalid student name input! Student name should have from 3 to 30 characters " +
                             "including spaces")
                     .asRuntimeException());
+            return ;
         }
 
         EnrollResponse response;
@@ -59,7 +61,6 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
-
         }
 
         response = EnrollResponse.newBuilder()
@@ -81,11 +82,11 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
             // Construct ClassState
             List<Student> enrolledStudents = studentClass.getEnrolledStudentsCollection().stream()
-                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
                             .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
-            List<ClassesDefinitions.Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
-                    .map(s -> ClassesDefinitions.Student.newBuilder().setStudentId(s.getId())
+            List<Student> discardedStudents = studentClass.getRevokedStudentsCollection().stream()
+                    .map(s -> Student.newBuilder().setStudentId(s.getId())
                             .setStudentName(s.getName()).build()).collect(Collectors.toList());
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -95,17 +96,12 @@ public class StudentServiceImpl extends StudentServiceImplBase {
             response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-            return;
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
+            response = ListClassResponse.newBuilder()
+                    .setCode(code).build();
         }
-
-        response = ListClassResponse.newBuilder()
-                .setCode(code).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

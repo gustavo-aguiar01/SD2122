@@ -43,25 +43,38 @@ public class Admin {
 
       String response;
       if (EXIT_CMD.equals(command)) {
+        frontend.shutdown();
         scanner.close();
         System.exit(0);
       }
       else if (ACTIVATE_CMD.equals(command)) {
-        response = frontend.activate();
-        System.out.println(response);
+        try {
+          response = frontend.activate();
+          System.out.println(response);
+        } catch (RuntimeException e) {
+          System.out.println(e.getMessage());
+        }
       }
       else if (DEACTIVATE_CMD.equals(command)) {
-        response = frontend.deactivate();
-        System.out.println(response);
+        try {
+          response = frontend.deactivate();
+          System.out.println(response);
+        } catch (RuntimeException e){
+          throw new RuntimeException(e.getMessage());
+        }
       }
       else if (DUMP_CMD.equals(command)) {
-        response = frontend.dump();
-        System.out.println(response);
+        try {
+          response = frontend.dump();
+          System.out.println(response);
+        } catch (RuntimeException e){
+          throw new RuntimeException(e.getMessage());
+        }
       } else {
         System.out.println("Command not found.");
       }
-
       System.out.printf("%n");
     }
+
   }
 }

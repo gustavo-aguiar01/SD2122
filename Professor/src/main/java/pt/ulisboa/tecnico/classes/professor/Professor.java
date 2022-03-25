@@ -1,7 +1,5 @@
 package pt.ulisboa.tecnico.classes.professor;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 
@@ -34,8 +32,7 @@ public class Professor {
     }
 
     // Frontend connection establishment
-    final ManagedChannel channel = ManagedChannelBuilder.forAddress(HOSTNAME, PORT_NUMBER).usePlaintext().build();
-    ProfessorFrontend frontend = new ProfessorFrontend(channel);
+    ProfessorFrontend frontend = new ProfessorFrontend(HOSTNAME, PORT_NUMBER);
     Scanner scanner = new Scanner(System.in);
 
     while(true) {
@@ -51,10 +48,9 @@ public class Professor {
         try {
           int capacity = Integer.parseInt(line[1]);
           System.out.println(frontend.openEnrollments(capacity));
-        } catch (NumberFormatException e) {
-          ErrorMessage.error(line[1] + " is not a valid integer!");
-        } catch (StatusRuntimeException e) {
-          ErrorMessage.error(e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
@@ -64,7 +60,13 @@ public class Professor {
           ErrorMessage.error("Invalid" + CLOSE_ENROLLMENTS_CMD + "command usage.");
           continue;
         }
-        System.out.println(frontend.closeEnrollments());
+        try {
+          System.out.println(frontend.closeEnrollments());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
+        }
+
       }
 
       // List - list cmd
@@ -73,7 +75,12 @@ public class Professor {
           ErrorMessage.error("Invalid" + LIST_CMD + "command usage.");
           continue;
         }
-        System.out.println(frontend.listClass());
+        try {
+          System.out.println(frontend.listClass());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
+        }
       }
 
       // Cancel enrollment - cancelEnrollment cmd
@@ -84,19 +91,20 @@ public class Professor {
         }
         try {
           System.out.println(frontend.cancelEnrollment(line[1]));
-        } catch (StatusRuntimeException e) {
-
-          ErrorMessage.error(e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
       // Local command to terminate - exit cmd
       if (EXIT_CMD.equals(line[0])) {
-        break;
+        frontend.shutdown();
+        scanner.close();
+        System.exit(0);
       }
 
       System.out.printf("%n");
     }
-    channel.shutdown();
   }
 }

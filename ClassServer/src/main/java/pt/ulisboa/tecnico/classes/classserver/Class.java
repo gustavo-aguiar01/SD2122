@@ -69,11 +69,9 @@ public class Class {
 
     public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
-        // realiability verification
-
         boolean openRegistrations = this.areRegistrationsOpen();
         DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "enroll", DEBUG_FLAG);
-        if (! openRegistrations) {
+        if (!openRegistrations) {
             throw new EnrollmentsAlreadyClosedException();
         }
 
@@ -84,29 +82,26 @@ public class Class {
         }
 
         boolean fullClass = this.isFullClass();
-        DebugMessage.debug("Class is " + (registrationsOpen ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
+        DebugMessage.debug("Class is " + (!fullClass ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
         if (fullClass) {
             throw new FullClassException();
         }
 
-        if (registrationsOpen == true && isFullClass() == false) {
-            enrolledStudents.put(student.getId(), student);
-            DebugMessage.debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName(), null, DEBUG_FLAG);
-        }
+        enrolledStudents.put(student.getId(), student);
+        DebugMessage.debug("Enrolled student with id: " + student.getId() + " and name: " + student.getName(), null, DEBUG_FLAG);
+
     }
 
-    public void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
+    public synchronized void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
 
-        // realiability verification
         boolean openRegistrations = this.areRegistrationsOpen();
         DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "openEnrollments", DEBUG_FLAG);
         if (openRegistrations) {
             throw new EnrollmentsAlreadyOpenException();
         }
 
-        boolean fullClass = this.getEnrolledStudentsCollection().size() >= capacity;
         DebugMessage.debug("Class is " + (registrationsOpen ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
-        if (fullClass) {
+        if (isFullClass()) {
             throw new FullClassException();
         }
 
@@ -115,9 +110,8 @@ public class Class {
         DebugMessage.debug("Opened class enrollment registrations with capacity of " + capacity + "!", null, DEBUG_FLAG);
     }
 
-    public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
+    public synchronized void closeEnrollments() throws EnrollmentsAlreadyClosedException {
 
-        // realiability verification
         boolean openRegistrations = this.areRegistrationsOpen();
         DebugMessage.debug("Registrations are " + (openRegistrations ? "open" : "closed"), "closeEnrollments", DEBUG_FLAG);
         if (! openRegistrations) {
@@ -128,9 +122,8 @@ public class Class {
         DebugMessage.debug("Closed class enrollment registrations!", null, DEBUG_FLAG);
     }
 
-    public void revokeEnrollment(String id) throws NonExistingStudentException {
+    public synchronized void revokeEnrollment(String id) throws NonExistingStudentException {
 
-        // realiability verification
         boolean studentEnroled = this.isStudentEnrolled(id);
         DebugMessage.debug("Student with id = " + id + " is " + (studentEnroled ? "" : "not") + " enrolled in this class", "revokeEnrollment", DEBUG_FLAG);
         if (! this.isStudentEnrolled(id)) {

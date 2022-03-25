@@ -1,16 +1,13 @@
 package pt.ulisboa.tecnico.classes.student;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 
 import java.util.Scanner;
 
 public class Student {
 
-  private static final String HOST = "localhost";
-  private static final int port = 8080;
+  private static final String HOSTNAME = "localhost";
+  private static final int PORT_NUMBER = 8080;
 
   private static final String ENROLL_CMD = "enroll";
   private static final String LIST_CMD = "list";
@@ -30,8 +27,7 @@ public class Student {
     }
     final String name = nameBuilder.toString();
 
-    final ManagedChannel channel = ManagedChannelBuilder.forAddress(HOST, port).usePlaintext().build();
-    final StudentFrontend studentFrontend = new StudentFrontend(channel);
+    final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER);
 
     while (true) {
       System.out.printf("> ");
@@ -40,25 +36,28 @@ public class Student {
       if (ENROLL_CMD.equals(line)) {
         try {
           System.out.println(studentFrontend.enroll(id, name));
-        } catch (StatusRuntimeException e) {
-          ErrorMessage.error(e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
       if (LIST_CMD.equals(line)) {
         try {
           System.out.println(studentFrontend.listClass());
-        } catch (StatusRuntimeException e) {
-          ErrorMessage.error(e.getStatus().getDescription());
+        } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
         }
       }
 
       if (EXIT_CMD.equals(line)) {
-        break;
+        studentFrontend.shutdown();
+        scanner.close();
+        System.exit(0);
       }
 
       System.out.printf("%n");
     }
-    channel.shutdown();
   }
 }
