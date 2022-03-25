@@ -21,8 +21,16 @@ public class Professor {
   public static void main(String[] args) {
 
     // Argument validation
-    if (args.length != 0) {
-      ErrorMessage.fatalError("No arguments needed!");
+    if (args.length > 1) {
+      ErrorMessage.fatalError("No arguments needed.");
+    }
+
+    if (args.length == 1) {
+      if (args[0].equals("-debug")) {
+        System.setProperty("debug", "true");
+      } else {
+        ErrorMessage.fatalError("Invalid argument passed, try -debug");
+      }
     }
 
     // Frontend connection establishment

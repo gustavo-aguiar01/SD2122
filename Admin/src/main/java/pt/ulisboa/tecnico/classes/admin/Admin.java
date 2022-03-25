@@ -18,8 +18,12 @@ public class Admin {
       ErrorMessage.fatalError("No arguments needed.");
     }
 
-    if (args.length == 1 && args[0].equals("-debug")) {
-      System.setProperty("debug", "true");
+    if (args.length == 1) {
+      if (args[0].equals("-debug")) {
+        System.setProperty("debug", "true");
+      } else {
+        ErrorMessage.fatalError("Invalid argument passed, try -debug");
+      }
     }
 
     final String host = "localhost";

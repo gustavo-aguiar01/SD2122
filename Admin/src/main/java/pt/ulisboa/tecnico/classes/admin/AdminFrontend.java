@@ -59,8 +59,7 @@ public class AdminFrontend {
         String message;
         if (code == ResponseCode.OK) {
             message = Stringify.format(response.getClassState());
-            DebugMessage.debug("Got the following server state : ", null, DEBUG_FLAG);
-            DebugMessage.debug(message, null, DEBUG_FLAG);
+            DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
 
         } else {
             message = Stringify.format(code);

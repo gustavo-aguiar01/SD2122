@@ -6,6 +6,7 @@ import io.grpc.ServerBuilder;
 
 import java.io.IOException;
 
+import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 
@@ -21,6 +22,7 @@ public class ClassServer {
   /* Server state class */
   public static class ClassServerState {
 
+    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
     private boolean active;
     private Class studentClass;
     private boolean primary;
@@ -33,16 +35,24 @@ public class ClassServer {
 
     public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
 
+      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : "non ") + "admin user", "getStudentClass", DEBUG_FLAG);
+      DebugMessage.debug("The server is" + (isAdmin ? " " : "not ") + " active", null, DEBUG_FLAG);
+
       /* Can only access server contents if the server is active */
       if (! isAdmin && ! this.isActive()) {
+        DebugMessage.debug("It's not possible to obtain student class", null, DEBUG_FLAG);
         throw new InactiveServerException();
       }
 
+      DebugMessage.debug("Student class returned successfully", null, DEBUG_FLAG);
       return studentClass;
     }
 
     public synchronized void setActive(boolean active) {
+
+      DebugMessage.debug("Server is now " + (active ? "active" : "inactive"), "setActive", DEBUG_FLAG);
       this.active = active;
+
     }
     public synchronized boolean isActive() {
       return active;
@@ -74,8 +84,12 @@ public class ClassServer {
       ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
     }
 
-    if (args.length == 4 && args[3].equals("-debug")) {
-      System.setProperty("debug", "true");
+    if (args.length == 4) {
+      if (args[3].equals("-debug")) {
+        System.setProperty("debug", "true");
+      } else {
+        ErrorMessage.fatalError("Invalid argument passed, try -debug");
+      }
     }
 
     serverState = new ClassServerState(args[2]);
