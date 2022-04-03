@@ -18,4 +18,13 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         responseObserver.onCompleted();
 
     }
+
+    @Override
+    public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
+
+        services.deleteService(request.getServiceName(), request.getHost(), request.getPort());
+
+        responseObserver.onNext(DeleteResponse.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
 }
