@@ -1,7 +1,10 @@
 package pt.ulisboa.tecnico.classes.namingserver.domain;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,4 +38,11 @@ public class NamingServices {
 
     }
 
+    public List<ServerAddress> lookupServersOfService (String serviceName, List<String> qualifiers) {
+        if (!serviceEntries.containsKey(serviceName)) {
+            return new ArrayList<ServerAddress>();
+        }
+
+        return serviceEntries.get(serviceName).lookupServers(qualifiers);
+    }
 }
