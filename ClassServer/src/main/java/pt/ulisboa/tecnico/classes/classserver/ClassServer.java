@@ -5,6 +5,8 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
@@ -12,10 +14,15 @@ import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException
 
 public class ClassServer {
 
+  /* Naming Server info */
+  private static final String NAMING_HOSTNAME = "localhost";
+  private static final int NAMING_PORT_NUMBER = 5000;
+
   /* Server host port. */
   private static int port;
   private static String host;
   private static ClassServerState serverState;
+  private static String primary;
 
   /* Server state class */
   public static class ClassServerState {
@@ -106,6 +113,8 @@ public class ClassServer {
       ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
     }
 
+    primary = args[2];
+
     if (args.length == 4) {
       if (args[3].equals("-debug")) {
         System.setProperty("debug", "true");
@@ -114,20 +123,25 @@ public class ClassServer {
       }
     }
 
-    serverState = new ClassServerState(args[2]);
-
     for (int i = 0; i < args.length; i++) {
       System.out.printf("args[%d] = %s%n", i, args[i]);
     }
 
     // create services instances
-    final BindableService adminImpl = new AdminServiceImpl(serverState);
-    final BindableService professorImpl = new ProfessorServiceImpl(serverState);
-    final BindableService studentImpl = new StudentServiceImpl(serverState);
+    final BindableService adminImpl = new pt.ulisboa.tecnico.classes.classserver.AdminServiceImpl(serverState);
+    final BindableService professorImpl = new pt.ulisboa.tecnico.classes.classserver.ProfessorServiceImpl(serverState);
+    final BindableService studentImpl = new pt.ulisboa.tecnico.classes.classserver.StudentServiceImpl(serverState);
 
     // Create a new server to listen on port.
     Server server = ServerBuilder.forPort(port).addService(adminImpl)
             .addService(professorImpl).addService(studentImpl).build();
+
+    final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
+
+    // Register server and service to name server
+    classFrontend.register("Turmas", host, port, primary);
+
+    serverState = new ClassServerState(primary);
 
     server.start();
     server.awaitTermination();

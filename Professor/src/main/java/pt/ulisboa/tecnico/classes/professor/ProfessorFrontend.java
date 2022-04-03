@@ -11,6 +11,8 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
 
+import java.util.concurrent.TimeUnit;
+
 public class ProfessorFrontend {
     private final ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
     private final ManagedChannel channel;
@@ -20,7 +22,7 @@ public class ProfessorFrontend {
 
     public ProfessorFrontend(String hostname, int port) {
         channel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
-        stub = ProfessorServiceGrpc.newBlockingStub(channel);
+        stub = ProfessorServiceGrpc.newBlockingStub(channel).withDeadlineAfter(500, TimeUnit.MILLISECONDS);
     }
 
     /**
