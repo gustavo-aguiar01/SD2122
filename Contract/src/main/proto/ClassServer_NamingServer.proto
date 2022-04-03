@@ -12,6 +12,16 @@ message RegisterRequest {
 message RegisterResponse {
 }
 
+message DeleteRequest {
+  string ServiceName = 1;
+  string host = 2;
+  uint32 port = 3;
+}
+
+message DeleteResponse {
+}
+
 service ClassServerService {
   rpc register(RegisterRequest) returns (RegisterResponse);
+  rpc delete(DeleteRequest) returns (DeleteResponse);
 }

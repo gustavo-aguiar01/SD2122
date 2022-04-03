@@ -31,4 +31,10 @@ public class ClassFrontend {
         stub.register(RegisterRequest.newBuilder().setServiceName(serviceName)
                     .setHost(host).setPort(port).addAllQualifiers(qualifiers).build());
     }
+
+    public void delete(String serviceName, String host, int port) {
+        DebugMessage.debug("Calling delete remote call", "delete", DEBUG_FLAG);
+        stub.delete(DeleteRequest.newBuilder().setServiceName(serviceName)
+                .setHost(host).setPort(port).build());
+    }
 }
