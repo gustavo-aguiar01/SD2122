@@ -1,13 +1,14 @@
 package pt.ulisboa.tecnico.classes.namingserver;
 
+import io.grpc.Server;
 import io.grpc.stub.StreamObserver;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerServiceGrpc.ClassServerServiceImplBase;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc.ClassNamingServerServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.namingserver.domain.NamingServices;
 
 import java.util.List;
 
-public class ClassServerServiceImpl extends ClassServerServiceImplBase {
+public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
 
     NamingServices services = new NamingServices();
 
@@ -23,13 +24,12 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
     @Override
     public void lookup(LookupRequest resquest, StreamObserver<LookupResponse> responseObserver) {
-
         String serviceName = resquest.getServiceName();
         List<String> qualifiers = resquest.getQualifiersList();
         List<ServerAddress> servers = services.lookupServersOfService(serviceName, qualifiers);
-
         LookupResponse response = LookupResponse.newBuilder().addAllServers(servers).build();
         responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
