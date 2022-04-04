@@ -6,12 +6,16 @@ message ServerAddress {
   int32 port = 2;
 }
 
+message Qualifier {
+  string name = 1;
+  string value = 2;
+}
+
 message RegisterRequest {
-  string ServiceName = 1;
+  string serviceName = 1;
   string host = 2;
   uint32 port = 3;
-  // TODO: qualifiers
-  repeated string qualifiers = 4;
+  repeated Qualifier qualifiers = 4;
 }
 
 message RegisterResponse {
@@ -19,7 +23,7 @@ message RegisterResponse {
 
 message LookupRequest {
   string serviceName = 1;
-  repeated string qualifiers = 2;
+  repeated Qualifier qualifiers = 2;
 }
 
 message LookupResponse {
@@ -27,7 +31,7 @@ message LookupResponse {
 }
 
 message DeleteRequest {
-  string ServiceName = 1;
+  string serviceName = 1;
   string host = 2;
   uint32 port = 3;
 }

@@ -5,8 +5,10 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 import java.io.IOException;
+
 import java.util.Timer;
 import java.util.TimerTask;
+
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
@@ -147,8 +149,12 @@ public class ClassServer {
 
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
-    // Register server and service to name server
-    classFrontend.register("Turmas", host, port, primary);
+    try {
+        classFrontend.register("Turmas", host, port, primary);
+    } catch (RuntimeException e) {
+          ErrorMessage.error(e.getMessage());
+          System.exit(1);
+    }
 
     // Class that allows the primary server to repeatedly propagate its state
     class PropagateState extends TimerTask {

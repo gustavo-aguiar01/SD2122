@@ -1,21 +1,17 @@
 package pt.ulisboa.tecnico.classes.namingserver.domain;
 
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
-
-import java.util.List;
+import java.util.Map;
 
 public class ServerEntry {
 
     private final String host;
     private final int port;
-    private List<String> qualifiers;
-    private final boolean primary;
+    private Map<String, String> qualifiers;
 
-    public ServerEntry(String host, int port, List<String> qualifiers) {
+    public ServerEntry(String host, int port, Map<String, String> qualifiers) {
         this.host = host;
         this.port = port;
         this.qualifiers = qualifiers;
-        this.primary = qualifiers.get(0).equals("P");
     }
 
     public String getHost() {
@@ -26,14 +22,10 @@ public class ServerEntry {
         return port;
     }
 
-    public boolean hasQualifier (List<String> qualifiers) {
-        // TODO : does this work?
-        return qualifiers.equals(this.qualifiers);
-    }
+    public Map<String, String> getQualifiers() { return qualifiers; }
 
-    public ServerAddress proto () {
-        ServerAddress serverProto = ServerAddress.newBuilder().setHost(this.host).setPort(this.port).build();
-        return serverProto;
+    public String getQualifierValue(String qualifierName) {
+        return qualifiers.get(qualifierName);
     }
 
     @Override
