@@ -4,10 +4,7 @@ import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class NamingServices {
 
@@ -39,10 +36,17 @@ public class NamingServices {
     }
 
     public List<ServerAddress> lookupServersOfService (String serviceName, List<String> qualifiers) {
+
+        DebugMessage.debug("Looking up servers of service " + serviceName + "with the following qualifiers " + Arrays.toString(qualifiers.toArray()),
+                "lookupServersOfService", DEBUG_FLAG);
         if (!serviceEntries.containsKey(serviceName)) {
+            DebugMessage.debug("The service associated with the service name " + serviceName + " does not exist",
+                    null, DEBUG_FLAG);
             return new ArrayList<ServerAddress>();
         }
 
+        DebugMessage.debug("Filtering servers of service " + serviceName + " based on qualifiers",
+                null, DEBUG_FLAG);
         return serviceEntries.get(serviceName).lookupServers(qualifiers);
     }
 }

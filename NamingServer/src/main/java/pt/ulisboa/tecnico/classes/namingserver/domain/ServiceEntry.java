@@ -3,10 +3,7 @@ package pt.ulisboa.tecnico.classes.namingserver.domain;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 public class ServiceEntry {
 
@@ -35,13 +32,20 @@ public class ServiceEntry {
 
     public List<ServerAddress> lookupServers (List<String> qualifiers) {
 
+        DebugMessage.debug("Filtering servers of service " + this.serviceName + " based on given qualifiers",
+                "lookupServers", DEBUG_FLAG);
         List<ServerAddress> validServers = new ArrayList<ServerAddress>();
         // If no qualifiers are specified return all
         // servers associated with this service
         if (qualifiers.size() == 0) {
+            DebugMessage.debug("No qualifiers passed so all servers associated with this service must be returned",
+                    null, DEBUG_FLAG);
             for (ServerEntry entry : serverEntries) {
                 validServers.add(entry.proto());
             }
+
+            DebugMessage.debug("Servers returned: " + Arrays.toString(validServers.toArray()),
+                    null, DEBUG_FLAG);
             return validServers;
         }
 
@@ -52,6 +56,8 @@ public class ServiceEntry {
             }
         }
 
+        DebugMessage.debug("Servers returned: " + Arrays.toString(validServers.toArray()),
+                null, DEBUG_FLAG);
         return validServers;
     }
 
