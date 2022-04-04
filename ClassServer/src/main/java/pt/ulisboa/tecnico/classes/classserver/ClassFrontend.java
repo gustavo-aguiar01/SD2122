@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.classes.classserver;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerServiceGrpc;
@@ -22,14 +24,18 @@ public class ClassFrontend {
         stub = ClassServerServiceGrpc.newBlockingStub(channel);
     }
 
-    public void register(String serviceName, String host, int port, String primary) {
+    public void register(String serviceName, String host, int port, String primary) throws RuntimeException {
 
-        List<String> qualifiers = new ArrayList<>();
-        qualifiers.add(primary);
+        List<Qualifier> qualifiers = new ArrayList<Qualifier>();
+        qualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue(primary).build());
 
         DebugMessage.debug("Calling register remote call", "register", DEBUG_FLAG);
-        stub.register(RegisterRequest.newBuilder().setServiceName(serviceName)
+        try {
+            stub.register(RegisterRequest.newBuilder().setServiceName(serviceName)
                     .setHost(host).setPort(port).addAllQualifiers(qualifiers).build());
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
     }
 
     public void delete(String serviceName, String host, int port) {

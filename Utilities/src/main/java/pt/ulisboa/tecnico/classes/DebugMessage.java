@@ -7,7 +7,7 @@ public class DebugMessage {
             if (function != null)
                 System.err.println("Debug (" + function + ") : ");
 
-            System.err.println("    - "  + debugMessage);
+            System.err.println(("    - "  + debugMessage).replace("\n", "\n      "));
         }
     }
 }

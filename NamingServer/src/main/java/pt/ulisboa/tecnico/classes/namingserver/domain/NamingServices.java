@@ -1,8 +1,9 @@
 package pt.ulisboa.tecnico.classes.namingserver.domain;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
+import pt.ulisboa.tecnico.classes.namingserver.exceptions.AlreadyExistingPrimaryServerException;
+import pt.ulisboa.tecnico.classes.namingserver.exceptions.AlreadyExistingServerException;
+import pt.ulisboa.tecnico.classes.namingserver.exceptions.InvalidServerInfoException;
 
 import java.util.*;
 import java.util.HashMap;
@@ -26,33 +27,62 @@ public class NamingServices {
         this.serviceEntries = serviceEntries;
     }
 
-    public void addService(String serviceName, String host, int port, List<String> qualifiers) {
+    public void addService(String serviceName, String host, int port, Map<String, String> qualifiers)
+            throws InvalidServerInfoException, AlreadyExistingServerException, AlreadyExistingPrimaryServerException{
 
-        DebugMessage.debug("Inserting service " + serviceName + " from server " + host + ":" + port,
+        DebugMessage.debug("Inserting server " + host + ":" + port + " with the following qualifiers:\n" +
+                        qualifiers.keySet().stream().map(q ->  q + " : " + qualifiers.get(q) + "\n")
+                                .collect(Collectors.joining()) + "to service " + serviceName,
                 "addService", DEBUG_FLAG);
+
+        if (!((1024 <= port) && (port <= 65535)) ||
+                !(qualifiers.containsKey("primaryStatus")) ||
+                !(Arrays.asList(new String[]{"P", "S"}).contains(qualifiers.get("primaryStatus")))) {
+            DebugMessage.debug("Invalid server info", null, DEBUG_FLAG);
+            throw new InvalidServerInfoException();
+        }
 
         if (!serviceEntries.containsKey(serviceName)) {
             DebugMessage.debug("Service does not exist. Creating service...",
                     null, DEBUG_FLAG);
             serviceEntries.put(serviceName, new ServiceEntry(serviceName));
         }
-        serviceEntries.get(serviceName).addServer(host, port, qualifiers);
+
+        if (serviceEntries.get(serviceName).getServerEntries().stream()
+                .anyMatch(se -> se.getHost().equals(host) && se.getPort() == port)) {
+            DebugMessage.debug("Server host:port already registered", null, DEBUG_FLAG);
+            throw new AlreadyExistingServerException();
+        }
+
+        if (qualifiers.get("primaryStatus").equals("P") &&
+                serviceEntries.get(serviceName).getServerEntries().stream()
+                .anyMatch(se -> se.getQualifierValue("primaryStatus").equals("P"))) {
+            DebugMessage.debug("Primary server already registered for given service", null, DEBUG_FLAG);
+            throw new AlreadyExistingPrimaryServerException();
+        }
+
+        serviceEntries.get(serviceName).addServer(new ServerEntry(host, port, qualifiers));
 
     }
 
-    public List<ServerAddress> lookupServersOfService (String serviceName, List<String> qualifiers) {
+    public List<ServerEntry> lookupServersOfService (String serviceName, Map<String, String> qualifiers) {
 
-        DebugMessage.debug("Looking up servers of service " + serviceName + "with the following qualifiers " + Arrays.toString(qualifiers.toArray()),
-                "lookupServersOfService", DEBUG_FLAG);
+        DebugMessage.debug("Looking up servers of service " + serviceName + "with the following qualifiers "
+                        + Arrays.toString(qualifiers.values().toArray()), "lookupServersOfService", DEBUG_FLAG);
         if (!serviceEntries.containsKey(serviceName)) {
             DebugMessage.debug("The service associated with the service name " + serviceName + " does not exist",
                     null, DEBUG_FLAG);
-            return new ArrayList<ServerAddress>();
+            return new ArrayList<ServerEntry>();
         }
 
         DebugMessage.debug("Filtering servers of service " + serviceName + " based on qualifiers",
                 null, DEBUG_FLAG);
-        return serviceEntries.get(serviceName).lookupServers(qualifiers);
+
+        // Get all server entries whose qualifiers match the given qualifiers element by element
+        return serviceEntries.get(serviceName).getServerEntries().stream()
+                .filter(se -> qualifiers.keySet().stream()
+                        .allMatch(q-> se.getQualifierValue(q).equals(qualifiers.get(q))))
+                .collect(Collectors.toList());
     }
   
     public void deleteService(String serviceName, String host, int port) {
