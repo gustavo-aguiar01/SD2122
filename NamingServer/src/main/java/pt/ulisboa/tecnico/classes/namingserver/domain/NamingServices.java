@@ -1,12 +1,15 @@
 package pt.ulisboa.tecnico.classes.namingserver.domain;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
+
+import java.util.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 public class NamingServices {
 
@@ -37,6 +40,21 @@ public class NamingServices {
 
     }
 
+    public List<ServerAddress> lookupServersOfService (String serviceName, List<String> qualifiers) {
+
+        DebugMessage.debug("Looking up servers of service " + serviceName + "with the following qualifiers " + Arrays.toString(qualifiers.toArray()),
+                "lookupServersOfService", DEBUG_FLAG);
+        if (!serviceEntries.containsKey(serviceName)) {
+            DebugMessage.debug("The service associated with the service name " + serviceName + " does not exist",
+                    null, DEBUG_FLAG);
+            return new ArrayList<ServerAddress>();
+        }
+
+        DebugMessage.debug("Filtering servers of service " + serviceName + " based on qualifiers",
+                null, DEBUG_FLAG);
+        return serviceEntries.get(serviceName).lookupServers(qualifiers);
+    }
+  
     public void deleteService(String serviceName, String host, int port) {
         DebugMessage.debug("Deleting server " + host + ":" + port + " from service " + serviceName, "deleteService", DEBUG_FLAG);
         ServiceEntry serviceEntry = serviceEntries.get(serviceName);
