@@ -5,8 +5,8 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
@@ -127,24 +127,49 @@ public class ClassServer {
       System.out.printf("args[%d] = %s%n", i, args[i]);
     }
 
-    // create services instances
+    serverState = new ClassServerState(primary);
+
+    // Create services instances
     final BindableService adminImpl = new pt.ulisboa.tecnico.classes.classserver.AdminServiceImpl(serverState);
     final BindableService professorImpl = new pt.ulisboa.tecnico.classes.classserver.ProfessorServiceImpl(serverState);
     final BindableService studentImpl = new pt.ulisboa.tecnico.classes.classserver.StudentServiceImpl(serverState);
 
-    // Create a new server to listen on port.
-    Server server = ServerBuilder.forPort(port).addService(adminImpl)
-            .addService(professorImpl).addService(studentImpl).build();
+    // If it's a secondary server we want to be able to be "propagateable"
+    Server server;
+    if (!serverState.primary) {
+      final BindableService classImpl = new pt.ulisboa.tecnico.classes.classserver.ClassServerServiceImpl(serverState);
+      server = ServerBuilder.forPort(port).addService(adminImpl)
+              .addService(professorImpl).addService(studentImpl).addService(classImpl).build();
+    } else {
+      server = ServerBuilder.forPort(port).addService(adminImpl)
+              .addService(professorImpl).addService(studentImpl).build();
+    }
 
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     // Register server and service to name server
     classFrontend.register("Turmas", host, port, primary);
 
-    serverState = new ClassServerState(primary);
+    // Class that allows the primary server to repeatedly propagate its state
+    class PropagateState extends TimerTask {
+      @Override
+      public void run() {
+        try {
+          System.out.println(classFrontend.propagateState(serverState.getStudentClass(false)));
+        } catch (InactiveServerException e) {
+          ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
+        }
+      }
+    }
+
+    // Every second the primary server propagates its state to the secondary server
+    if (serverState.primary) {
+      Timer timer = new Timer();
+      timer.schedule(new PropagateState(), 0, 1000);
+    }
 
     server.start();
     server.awaitTermination();
-
+    classFrontend.delete("Turmas", host, port);
   }
 }

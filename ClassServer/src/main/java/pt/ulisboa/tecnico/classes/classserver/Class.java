@@ -71,6 +71,16 @@ public class Class {
         return enrolledStudents;
     }
 
+    public void setEnrolledStudents(Collection<ClassStudent> students) {
+        this.enrolledStudents.clear();
+        students.stream().forEach(s -> this.enrolledStudents.put(s.getId(), s));
+    }
+
+    public void setDiscardedStudents(Collection<ClassStudent> students) {
+        this.revokedStudents.clear();
+        students.stream().forEach(s -> this.revokedStudents.put(s.getId(), s));
+    }
+
 
     /**
      * Getter for the collection of all revoked students
