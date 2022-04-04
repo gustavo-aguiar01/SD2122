@@ -1,8 +1,11 @@
 package pt.ulisboa.tecnico.classes.namingserver;
 
 import io.grpc.Grpc;
+
+import io.grpc.Server;
+
 import io.grpc.stub.StreamObserver;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerServiceGrpc.ClassServerServiceImplBase;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc.ClassNamingServerServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.namingserver.domain.NamingServices;
 import pt.ulisboa.tecnico.classes.namingserver.exceptions.AlreadyExistingPrimaryServerException;
@@ -16,7 +19,7 @@ import java.util.stream.Collectors;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
-public class ClassServerServiceImpl extends ClassServerServiceImplBase {
+public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
 
     NamingServices services = new NamingServices();
 
@@ -63,8 +66,10 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
         LookupResponse response = LookupResponse.newBuilder().addAllServers(servers).build();
         responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
-  
+
+    @Override
     public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
 
         services.deleteService(request.getServiceName(), request.getHost(), request.getPort());

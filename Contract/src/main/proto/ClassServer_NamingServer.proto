@@ -39,7 +39,7 @@ message DeleteRequest {
 message DeleteResponse {
 }
 
-service ClassServerService {
+service ClassNamingServerService {
   rpc register(RegisterRequest) returns (RegisterResponse);
   rpc lookup(LookupRequest) returns (LookupResponse);
   rpc delete(DeleteRequest) returns (DeleteResponse);
