@@ -31,7 +31,8 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         LookupResponse response = LookupResponse.newBuilder().addAllServers(servers).build();
         responseObserver.onNext(response);
     }
-  
+
+    @Override
     public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
 
         services.deleteService(request.getServiceName(), request.getHost(), request.getPort());

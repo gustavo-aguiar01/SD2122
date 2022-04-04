@@ -145,6 +145,6 @@ public class ClassServer {
 
     server.start();
     server.awaitTermination();
-
+    classFrontend.delete("Turmas", host, port);
   }
 }

@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.classes.classserver;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerServiceGrpc;
 
