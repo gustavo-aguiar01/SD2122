@@ -24,10 +24,19 @@ message LookupRequest {
 
 message LookupResponse {
   repeated ServerAddress servers = 1;
+}
 
+message DeleteRequest {
+  string ServiceName = 1;
+  string host = 2;
+  uint32 port = 3;
+}
+
+message DeleteResponse {
 }
 
 service ClassServerService {
   rpc register(RegisterRequest) returns (RegisterResponse);
   rpc lookup(LookupRequest) returns (LookupResponse);
+  rpc delete(DeleteRequest) returns (DeleteResponse);
 }
