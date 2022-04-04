@@ -54,8 +54,8 @@ public class ClassFrontend {
 
     public String propagateState(Class studentClass) {
         DebugMessage.debug("Calling propagateState remote call", "propagateState", DEBUG_FLAG);
-        List<String> qualifiers = new ArrayList<>();
-        qualifiers.add("S");
+        List<Qualifier> qualifiers = new ArrayList<>();
+        qualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("S").build());
         List<ServerAddress> servers = namingStub.lookup(LookupRequest.newBuilder()
                 .setServiceName("Turmas").addAllQualifiers(qualifiers).build()).getServersList();
         if (servers.size() == 0) {
