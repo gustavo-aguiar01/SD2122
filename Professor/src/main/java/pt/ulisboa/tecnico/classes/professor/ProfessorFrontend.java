@@ -32,6 +32,7 @@ public class ProfessorFrontend {
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
+
     public ProfessorFrontend(String hostname, int port, String serviceName) {
         this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
         this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
@@ -71,7 +72,6 @@ public class ProfessorFrontend {
         System.out.printf(server.getHost());
         System.out.printf(" " + Integer.toString(server.getPort()) + "\n");
         channel = ManagedChannelBuilder.forAddress(server.getHost(), server.getPort()).usePlaintext().build();
-        stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
 

@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.classes.classserver;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
@@ -56,23 +57,27 @@ public class ClassFrontend {
     public String propagateState(Class studentClass) throws RuntimeException {
         DebugMessage.debug("Calling propagateState remote call", "propagateState", DEBUG_FLAG);
 
+        // Propagate state to secondary servers
         List<Qualifier> qualifiers = new ArrayList<>();
         qualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("S").build());
 
         List<ServerAddress> servers;
 
         try {
+            // Lookup secondary servers
             servers = namingStub.lookup(LookupRequest.newBuilder()
                     .setServiceName("Turmas").addAllQualifiers(qualifiers).build()).getServersList();
         } catch (StatusRuntimeException e) {
             throw new RuntimeException(e.getStatus().getDescription());
         }
 
+        String message;
         if (servers.size() == 0) {
             DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+            message = Stringify.format(ResponseCode.INACTIVE_SERVER);
+        } else {
+            message = Stringify.format(ResponseCode.OK);
         }
-
-        String message = Stringify.format(ResponseCode.OK);
         for (ServerAddress se : servers) {
             DebugMessage.debug("Propagating to secondary server @ " + se.getHost() + ":" + se.getPort(),
                                 null, DEBUG_FLAG);
@@ -92,9 +97,15 @@ public class ClassFrontend {
                 response = serverStub.propagateState(PropagateStateRequest.newBuilder()
                         .setClassState(state).build());
             } catch (StatusRuntimeException e) {
-                throw new RuntimeException(e.getStatus().getDescription());
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    message = Stringify.format(ResponseCode.INACTIVE_SERVER); // Edge case where backup server closed after primary checked if servers size != 0
+                    return message;
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
             }
-
             ResponseCode code = response.getCode();
             message = Stringify.format(code);
             DebugMessage.debug("Got the following response: " + message, null, DEBUG_FLAG);
