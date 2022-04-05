@@ -158,7 +158,9 @@ public class ClassServer {
           System.out.println(classFrontend.propagateState(serverState.getStudentClass(false)));
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
-        } 
+        } catch (RuntimeException e) {
+          ErrorMessage.fatalError("Failed to propagate primary server.");
+        }
       }
     }
 
@@ -169,14 +171,21 @@ public class ClassServer {
     }
 
     server.start();
-    server.awaitTermination();
 
-    try {
-      classFrontend.delete("Turmas", host, port);
-    } catch (RuntimeException e) {
-      ErrorMessage.error(e.getMessage());
-      System.exit(1);
+    // Make sure to delete the server from naming server upon termination
+    class DeleteFromNamingServer extends Thread {
+      public void run() {
+        try {
+          classFrontend.delete("Turmas", host, port);
+        } catch (RuntimeException e) {
+          ErrorMessage.fatalError(e.getMessage());
+        }
+      }
     }
 
+    Runtime runtime = Runtime.getRuntime();
+    runtime.addShutdownHook(new DeleteFromNamingServer());
+
+    server.awaitTermination();
   }
 }

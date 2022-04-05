@@ -22,7 +22,7 @@ public class ProfessorFrontend {
 
     public ProfessorFrontend(String hostname, int port) {
         channel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
-        stub = ProfessorServiceGrpc.newBlockingStub(channel).withDeadlineAfter(500, TimeUnit.MILLISECONDS);
+        stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
 
     /**
