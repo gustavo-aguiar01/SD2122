@@ -47,9 +47,7 @@ public class Student {
     }
     final String name = nameBuilder.toString();
 
-    System.out.printf("Creating frontend\n");
     final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
-    System.out.printf("Frontend created\n");
     while (true) {
       System.out.printf("> ");
       String line = scanner.nextLine();

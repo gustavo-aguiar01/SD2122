@@ -29,8 +29,8 @@ public class StudentFrontend {
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     public StudentFrontend(String hostname, int port, String serviceName) {
-        namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
-        namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
+        this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
+        this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
 
         List<Qualifier> emptyQualifiers = new ArrayList<Qualifier>();
         this.allServers = namingServerStub.lookup(LookupRequest.newBuilder()
