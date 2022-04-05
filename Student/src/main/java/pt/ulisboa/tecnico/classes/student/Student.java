@@ -7,7 +7,9 @@ import java.util.Scanner;
 public class Student {
 
   private static final String HOSTNAME = "localhost";
-  private static final int PORT_NUMBER = 8080;
+  private static final int PORT_NUMBER = 5000;
+
+  private static final String SERVICE = "Turmas";
 
   private static final String ENROLL_CMD = "enroll";
   private static final String LIST_CMD = "list";
@@ -45,8 +47,9 @@ public class Student {
     }
     final String name = nameBuilder.toString();
 
-    final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER);
-
+    System.out.printf("Creating frontend\n");
+    final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    System.out.printf("Frontend created\n");
     while (true) {
       System.out.printf("> ");
       String line = scanner.nextLine();
