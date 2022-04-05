@@ -1,28 +1,73 @@
 package pt.ulisboa.tecnico.classes.student;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.Student;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StudentFrontend {
 
-    private final StudentServiceGrpc.StudentServiceBlockingStub stub;
-    private final ManagedChannel channel;
+    private final ClassNamingServerServiceGrpc.ClassNamingServerServiceBlockingStub namingServerStub;
+    private final ManagedChannel namingServerChannel;
+
+    private StudentServiceGrpc.StudentServiceBlockingStub stub;
+    private ManagedChannel channel;
+
+    private final List<ServerAddress> primaryServers;
+    private final List<ServerAddress> allServers;
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    public StudentFrontend(String hostname, int port) {
-        channel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
-        stub = StudentServiceGrpc.newBlockingStub(channel);
+    public StudentFrontend(String hostname, int port, String serviceName) {
+        this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
+        this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
+
+        List<Qualifier> emptyQualifiers = new ArrayList<Qualifier>();
+        this.allServers = namingServerStub.lookup(LookupRequest.newBuilder()
+                .setServiceName(serviceName)
+                .addAllQualifiers(emptyQualifiers).build()).getServersList();
+
+        List<Qualifier> primaryQualifier = new ArrayList<Qualifier>();
+        primaryQualifier.add(Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
+        this.primaryServers = namingServerStub.lookup(LookupRequest.newBuilder()
+                .setServiceName(serviceName)
+                .addAllQualifiers(primaryQualifier).build()).getServersList();
+    }
+
+    private void setWritingServer () {
+        if (this.primaryServers.size() == 0) {
+            // TODO : return error code? or throw error
+            return;
+        }
+
+        ServerAddress server = primaryServers.get(0);
+        System.out.printf(server.getHost());
+        System.out.printf(" " + Integer.toString(server.getPort()) + "\n");
+        this.channel = ManagedChannelBuilder.forAddress(server.getHost(), server.getPort()).usePlaintext().build();
+        this.stub = StudentServiceGrpc.newBlockingStub(this.channel);
+    }
+
+    private void setReadingServer () {
+        if (this.allServers.size() == 0) {
+            // TODO : return error code? or throw error
+            return;
+        }
+
+        ServerAddress server = allServers.get(0);
+        System.out.printf(server.getHost());
+        System.out.printf(" " + Integer.toString(server.getPort()) + "\n");
+        this.channel = ManagedChannelBuilder.forAddress(server.getHost(), server.getPort()).usePlaintext().build();
+        this.stub = StudentServiceGrpc.newBlockingStub(this.channel);
     }
 
     /**
@@ -33,7 +78,7 @@ public class StudentFrontend {
      * @throws RuntimeException
      */
     public String enroll(String id, String name) throws RuntimeException {
-
+        setWritingServer();
         try {
 
             DebugMessage.debug("Calling remote call enroll", "enroll", DEBUG_FLAG);
@@ -60,7 +105,7 @@ public class StudentFrontend {
      * @throws RuntimeException
      */
     public String listClass() throws RuntimeException {
-
+        setReadingServer();
         try {
 
             DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);

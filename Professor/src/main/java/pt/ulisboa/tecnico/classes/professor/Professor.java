@@ -7,7 +7,9 @@ import java.util.Scanner;
 public class Professor {
 
   private static final String HOSTNAME = "localhost";
-  private static final int PORT_NUMBER = 8080;
+  private static final int PORT_NUMBER = 5000;
+
+  private static final String SERVICE = "Turmas";
 
   private static final String OPEN_ENROLLMENTS_CMD = "openEnrollments";
   private static final String CLOSE_ENROLLMENTS_CMD = "closeEnrollments";
@@ -37,7 +39,7 @@ public class Professor {
     }
 
     // Frontend connection establishment
-    ProfessorFrontend frontend = new ProfessorFrontend(HOSTNAME, PORT_NUMBER);
+    ProfessorFrontend frontend = new ProfessorFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
     Scanner scanner = new Scanner(System.in);
 
     while(true) {

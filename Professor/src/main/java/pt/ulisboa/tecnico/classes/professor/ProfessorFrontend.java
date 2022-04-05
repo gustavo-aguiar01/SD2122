@@ -8,22 +8,72 @@ import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ProfessorFrontend {
-    private final ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
-    private final ManagedChannel channel;
+
+    private final ClassNamingServerServiceGrpc.ClassNamingServerServiceBlockingStub namingServerStub;
+    private final ManagedChannel namingServerChannel;
+
+    private final List<ClassServerNamingServer.ServerAddress> primaryServers;
+    private final List<ClassServerNamingServer.ServerAddress> allServers;
+
+    private ProfessorServiceGrpc.ProfessorServiceBlockingStub stub;
+    private ManagedChannel channel;
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    public ProfessorFrontend(String hostname, int port) {
-        channel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
+
+    public ProfessorFrontend(String hostname, int port, String serviceName) {
+        this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
+        this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
+
+        List<Qualifier> emptyQualifiers = new ArrayList<Qualifier>();
+        this.allServers = namingServerStub.lookup(LookupRequest.newBuilder()
+                .setServiceName(serviceName)
+                .addAllQualifiers(emptyQualifiers).build()).getServersList();
+
+        List<Qualifier> primaryQualifier = new ArrayList<Qualifier>();
+        primaryQualifier.add(Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
+        this.primaryServers = namingServerStub.lookup(LookupRequest.newBuilder()
+                .setServiceName(serviceName)
+                .addAllQualifiers(primaryQualifier).build()).getServersList();
+    }
+
+    private void setWritingServer () {
+        if (this.primaryServers.size() == 0) {
+            // TODO : return error code? or throw error
+            return;
+        }
+
+        ServerAddress server = primaryServers.get(0);
+        System.out.printf(server.getHost());
+        System.out.printf(" " + Integer.toString(server.getPort()) + "\n");
+        channel = ManagedChannelBuilder.forAddress(server.getHost(), server.getPort()).usePlaintext().build();
         stub = ProfessorServiceGrpc.newBlockingStub(channel);
     }
+
+    private void setReadingServer () {
+        if (this.allServers.size() == 0) {
+            // TODO : return error code? or throw error
+            return;
+        }
+
+        ServerAddress server = allServers.get(0);
+        System.out.printf(server.getHost());
+        System.out.printf(" " + Integer.toString(server.getPort()) + "\n");
+        channel = ManagedChannelBuilder.forAddress(server.getHost(), server.getPort()).usePlaintext().build();
+    }
+
 
     /**
      * "openEnrollments" client remote call facade
@@ -32,6 +82,7 @@ public class ProfessorFrontend {
      * @throws RuntimeException
      */
     public String openEnrollments(int capacity) throws RuntimeException {
+        setWritingServer();
 
         try {
             DebugMessage.debug("Calling remote call openEnrollments", "openEnrollments", DEBUG_FLAG);
@@ -57,6 +108,8 @@ public class ProfessorFrontend {
      * @return String
      */
     public String closeEnrollments() {
+        setWritingServer();
+
         try {
             DebugMessage.debug("Calling remote call closeEnrollments", "closeEnrollments", DEBUG_FLAG);
             ProfessorClassServer.CloseEnrollmentsResponse responseCloseEnrollments = stub.closeEnrollments(ProfessorClassServer.CloseEnrollmentsRequest.getDefaultInstance());
@@ -75,6 +128,7 @@ public class ProfessorFrontend {
      * @return String
      */
     public String listClass() {
+        setReadingServer();
 
         try {
             DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);
@@ -101,6 +155,8 @@ public class ProfessorFrontend {
      * @throws RuntimeException
      */
     public String cancelEnrollment(String id) throws RuntimeException {
+        setWritingServer();
+
         try {
             DebugMessage.debug("Calling remote call cancelEnrollment", "cancelEnrollment", DEBUG_FLAG);
             ProfessorClassServer.CancelEnrollmentResponse responseCancelEnrollments = stub.cancelEnrollment(
