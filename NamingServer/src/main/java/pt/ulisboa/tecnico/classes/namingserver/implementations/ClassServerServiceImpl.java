@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.classes.namingserver;
+package pt.ulisboa.tecnico.classes.namingserver.implementations;
 
 import io.grpc.Grpc;
 
@@ -58,7 +58,7 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
 
         String serviceName = request.getServiceName();
         HashMap<String, String> qualifiers = new HashMap<>();
-        request.getQualifiersList().forEach(q -> qualifiers.put(q.getValue(), q.getName()));
+        request.getQualifiersList().forEach(q -> qualifiers.put(q.getName(), q.getValue()));
 
         List<ServerAddress> servers = services.lookupServersOfService(serviceName, qualifiers).stream()
                 .map(s -> ServerAddress.newBuilder().setHost(s.getHost()).setPort(s.getPort()).build())

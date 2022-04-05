@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.classserver.implementations.*;
 
 public class ClassServer {
 
@@ -132,20 +133,13 @@ public class ClassServer {
     serverState = new ClassServerState(primary);
 
     // Create services instances
-    final BindableService adminImpl = new pt.ulisboa.tecnico.classes.classserver.AdminServiceImpl(serverState);
-    final BindableService professorImpl = new pt.ulisboa.tecnico.classes.classserver.ProfessorServiceImpl(serverState);
-    final BindableService studentImpl = new pt.ulisboa.tecnico.classes.classserver.StudentServiceImpl(serverState);
+    final BindableService adminImpl = new AdminServiceImpl(serverState);
+    final BindableService professorImpl = new ProfessorServiceImpl(serverState);
+    final BindableService studentImpl = new StudentServiceImpl(serverState);
+    final BindableService classImpl = new ClassServerServiceImpl(serverState);
 
-    // If it's a secondary server we want to be able to be "propagateable"
-    Server server;
-    if (!serverState.primary) {
-      final BindableService classImpl = new pt.ulisboa.tecnico.classes.classserver.ClassServerServiceImpl(serverState);
-      server = ServerBuilder.forPort(port).addService(adminImpl)
+    Server server = ServerBuilder.forPort(port).addService(adminImpl)
               .addService(professorImpl).addService(studentImpl).addService(classImpl).build();
-    } else {
-      server = ServerBuilder.forPort(port).addService(adminImpl)
-              .addService(professorImpl).addService(studentImpl).build();
-    }
 
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
@@ -164,7 +158,7 @@ public class ClassServer {
           System.out.println(classFrontend.propagateState(serverState.getStudentClass(false)));
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
-        }
+        } 
       }
     }
 
@@ -176,6 +170,13 @@ public class ClassServer {
 
     server.start();
     server.awaitTermination();
-    classFrontend.delete("Turmas", host, port);
+
+    try {
+      classFrontend.delete("Turmas", host, port);
+    } catch (RuntimeException e) {
+      ErrorMessage.error(e.getMessage());
+      System.exit(1);
+    }
+
   }
 }

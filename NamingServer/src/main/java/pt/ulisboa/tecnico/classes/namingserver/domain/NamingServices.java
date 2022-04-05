@@ -67,8 +67,10 @@ public class NamingServices {
 
     public List<ServerEntry> lookupServersOfService (String serviceName, Map<String, String> qualifiers) {
 
-        DebugMessage.debug("Looking up servers of service " + serviceName + "with the following qualifiers "
-                        + Arrays.toString(qualifiers.values().toArray()), "lookupServersOfService", DEBUG_FLAG);
+        DebugMessage.debug("Looking up server with the following qualifiers:\n" +
+                        qualifiers.keySet().stream().map(q ->  q + " : " + qualifiers.get(q) + "\n")
+                                .collect(Collectors.joining()) + "to service " + serviceName,
+                "lookupServersOfService", DEBUG_FLAG);
         if (!serviceEntries.containsKey(serviceName)) {
             DebugMessage.debug("The service associated with the service name " + serviceName + " does not exist",
                     null, DEBUG_FLAG);
@@ -81,7 +83,7 @@ public class NamingServices {
         // Get all server entries whose qualifiers match the given qualifiers element by element
         return serviceEntries.get(serviceName).getServerEntries().stream()
                 .filter(se -> qualifiers.keySet().stream()
-                        .allMatch(q-> se.getQualifierValue(q).equals(qualifiers.get(q))))
+                        .allMatch(q-> qualifiers.get(q) != null && se.getQualifierValue(q).equals(qualifiers.get(q))))
                 .collect(Collectors.toList());
     }
   

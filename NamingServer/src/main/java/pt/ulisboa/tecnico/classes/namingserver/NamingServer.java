@@ -6,8 +6,8 @@ import io.grpc.ServerBuilder;
 
 import java.io.IOException;
 
-import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
+import pt.ulisboa.tecnico.classes.namingserver.implementations.ClassServerServiceImpl;
 
 public class NamingServer {
 

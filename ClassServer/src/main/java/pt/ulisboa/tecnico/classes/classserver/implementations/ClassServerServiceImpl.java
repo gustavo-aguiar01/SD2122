@@ -1,15 +1,13 @@
-package pt.ulisboa.tecnico.classes.classserver;
+package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
 import pt.ulisboa.tecnico.classes.classserver.Class;
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
-import pt.ulisboa.tecnico.classes.classserver.ClassStudent;
+import pt.ulisboa.tecnico.classes.classserver.ClassUtilities;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerServiceGrpc.*;
-
-import java.util.stream.Collectors;
 
 public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
@@ -28,8 +26,8 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
             Class studentClass = serverState.getStudentClass(false);
             studentClass.setCapacity(state.getCapacity());
             studentClass.setRegistrationsOpen(state.getOpenEnrollments());
-            studentClass.setEnrolledStudents(state.getEnrolledList().stream().map(s -> new ClassStudent(s.getStudentId(), s.getStudentName())).collect(Collectors.toList()));
-            studentClass.setDiscardedStudents(state.getDiscardedList().stream().map(s -> new ClassStudent(s.getStudentId(), s.getStudentName())).collect(Collectors.toList()));
+            studentClass.setEnrolledStudents(ClassUtilities.studentsToDomain(state.getEnrolledList()));
+            studentClass.setDiscardedStudents(ClassUtilities.studentsToDomain(state.getDiscardedList()));
             code = ResponseCode.OK;
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
