@@ -1,29 +1,64 @@
-package pt.ulisboa.tecnico.classes.student;
+package pt.ulisboa.tecnico.classes;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import com.google.protobuf.GeneratedMessageV3;
-import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.function.Function;
 
-public abstract class Frontend {
+public abstract class ClientFrontend {
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    protected final ArrayDeque<ClassServerNamingServer.ServerAddress> allServers = new ArrayDeque<>();
-    protected final ArrayDeque<ClassServerNamingServer.ServerAddress> writeServers = new ArrayDeque<>();
+    private final ArrayDeque<ClassServerNamingServer.ServerAddress> allServers = new ArrayDeque<>();
+    private final ArrayDeque<ClassServerNamingServer.ServerAddress> writeServers = new ArrayDeque<>();
 
-    public Frontend() {}
+    private final ClassNamingServerServiceGrpc.ClassNamingServerServiceBlockingStub namingServerStub;
+    private final ManagedChannel namingServerChannel;
+
+    public final String serviceName;
+
+    public ClientFrontend(String hostname, int port, String serviceName) {
+        this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
+        this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
+        this.serviceName = serviceName;
+
+        try {
+            List<ClassServerNamingServer.Qualifier> emptyQualifiers = new ArrayList<>();
+            List<ClassServerNamingServer.Qualifier> writeQualifiers = new ArrayList<>();
+            writeQualifiers.add(ClassServerNamingServer.Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
+            setServers(allServers, emptyQualifiers);
+            setServers(writeServers, writeQualifiers);
+        } catch (StatusRuntimeException e) {
+            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+    }
+
+    /**
+     * Initialize queue's of service servers
+     * @param servers
+     * @param qualifiers
+     * @throws StatusRuntimeException
+     */
+    public void setServers(Queue<ClassServerNamingServer.ServerAddress> servers, List<ClassServerNamingServer.Qualifier> qualifiers) throws StatusRuntimeException {
+        List<ClassServerNamingServer.ServerAddress> responseServers = namingServerStub.lookup(ClassServerNamingServer.LookupRequest.newBuilder()
+                .setServiceName(serviceName)
+                .addAllQualifiers(qualifiers).build()).getServersList();
+        servers.addAll(responseServers);
+    }
 
     public GeneratedMessageV3 exchangeMessages(GeneratedMessageV3 message,  Method stubCreator, Method stubMethod,
                                                Function<GeneratedMessageV3, Boolean> continueCondition, boolean isWrite) {
@@ -72,5 +107,7 @@ public abstract class Frontend {
 
         return response;
     }
+
+    public void shutdown() { namingServerChannel.shutdown(); }
 
 }

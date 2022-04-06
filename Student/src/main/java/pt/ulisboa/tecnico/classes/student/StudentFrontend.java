@@ -1,57 +1,22 @@
 package pt.ulisboa.tecnico.classes.student;
 
-import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.*;
 
+import pt.ulisboa.tecnico.classes.ClientFrontend;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.Student;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
 
-import java.util.*;
-
-public class StudentFrontend extends Frontend {
-
-    private final ClassNamingServerServiceGrpc.ClassNamingServerServiceBlockingStub namingServerStub;
-    private final ManagedChannel namingServerChannel;
-
-    public String serviceName;
+public class StudentFrontend extends ClientFrontend {
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     public StudentFrontend(String hostname, int port, String serviceName) {
-        this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
-        this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
-        this.serviceName = serviceName;
-
-        try {
-            List<Qualifier> emptyQualifiers = new ArrayList<>();
-            List<Qualifier> writeQualifiers = new ArrayList<>();
-            writeQualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
-            setServers(super.allServers, emptyQualifiers);
-            setServers(super.writeServers, writeQualifiers);
-        } catch (StatusRuntimeException e) {
-            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
-            throw new RuntimeException(e.getStatus().getDescription());
-        }
-    }
-
-    /**
-     * Initialize queue's of service servers
-     * @param servers
-     * @param qualifiers
-     * @throws StatusRuntimeException
-     */
-    public void setServers(Queue<ServerAddress> servers, List<Qualifier> qualifiers) throws StatusRuntimeException {
-        List<ServerAddress> responseServers = namingServerStub.lookup(LookupRequest.newBuilder()
-                .setServiceName(serviceName)
-                .addAllQualifiers(qualifiers).build()).getServersList();
-        servers.addAll(responseServers);
+        super(hostname, port, serviceName);
     }
 
     /**
@@ -97,11 +62,12 @@ public class StudentFrontend extends Frontend {
      */
     public String listClass() throws RuntimeException {
 
+        DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);
+        ListClassRequest request = ListClassRequest.getDefaultInstance();
+        ListClassResponse response;
+
         try {
-
-            DebugMessage.debug("Calling remote call listClass", "listClass", DEBUG_FLAG);
-
-            ListClassResponse response = (ListClassResponse) exchangeMessages(ListClassRequest.getDefaultInstance(),
+            response = (ListClassResponse) exchangeMessages(request,
                     StudentServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     StudentServiceGrpc.StudentServiceBlockingStub.class.getMethod("listClass", ListClassRequest.class),
                     x -> (((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), false);
@@ -111,7 +77,7 @@ public class StudentFrontend extends Frontend {
             DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
 
             if (response.getCode() != ResponseCode.OK) {
-                return Stringify.format(code);
+                return message;
             } else {
                 DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
                 return Stringify.format(response.getClassState());
@@ -128,7 +94,7 @@ public class StudentFrontend extends Frontend {
      * Communication channel shutdown function
      */
     public void shutdown() {
-        namingServerChannel.shutdown();
+        super.shutdown();
     }
 
 }

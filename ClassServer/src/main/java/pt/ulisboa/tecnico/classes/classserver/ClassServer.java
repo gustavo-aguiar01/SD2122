@@ -160,10 +160,10 @@ public class ClassServer {
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     try {
-        classFrontend.register("Turmas", host, port, primary);
+      classFrontend.register("Turmas", host, port, primary);
     } catch (RuntimeException e) {
-          ErrorMessage.error(e.getMessage());
-          System.exit(1);
+      ErrorMessage.error(e.getMessage());
+      System.exit(1);
     }
 
     // Class that allows the primary server to repeatedly propagate its state
@@ -171,7 +171,7 @@ public class ClassServer {
       @Override
       public void run() {
         try {
-          System.out.println(classFrontend.propagateState(serverState.getStudentClass(false)));
+          DebugMessage.debug(classFrontend.propagateState(serverState.getStudentClass(false)), "propagateState", ClassServerState.DEBUG_FLAG);
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
         } catch (RuntimeException e) {
