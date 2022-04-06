@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import com.google.protobuf.GeneratedMessageV3;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class ClientFrontend {
 
@@ -41,6 +43,12 @@ public abstract class ClientFrontend {
             writeQualifiers.add(ClassServerNamingServer.Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
             setServers(allServers, emptyQualifiers);
             setServers(writeServers, writeQualifiers);
+            DebugMessage.debug("Got the following servers:\n" +
+                    allServers.stream().map(sa ->  sa.getHost() + " : " + sa.getPort() + "\n")
+                    .collect(Collectors.joining()) + " and the following write servers\n" +
+                    writeServers.stream().map(sa ->  sa.getHost() + " : " + sa.getPort() + "\n")
+                            .collect(Collectors.joining()), "ClientFrontend Constructor", DEBUG_FLAG);
+
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
@@ -78,23 +86,24 @@ public abstract class ClientFrontend {
                 writeServers.addLast(sa);
             }
 
+            DebugMessage.debug("Trying server @" + sa.getHost() + " : " + sa.getPort(),
+                    "exchangeMessages", DEBUG_FLAG);
+
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+
             try {
                 AbstractBlockingStub stub = (AbstractBlockingStub) stubCreator.invoke(null, channel);
 
-                DebugMessage.debug("Trying server @" + sa.getHost() + " : " + sa.getPort(),
-                        "exchangeMessages", DEBUG_FLAG);
-
                 response = (GeneratedMessageV3) stubMethod.invoke(stub, message);
 
-                if (continueCondition.apply(response) || i == writeServers.size() - 1) {
+                if (!continueCondition.apply(response) || i == (isWrite ? writeServers.size() : allServers.size()) - 1) {
                     channel.shutdown();
                     return response;
                 }
 
             } catch (InvocationTargetException ite) {
                 StatusRuntimeException e = (StatusRuntimeException) ite.getTargetException();
-                if (!(continueCondition.apply(response) && i < writeServers.size() - 1)) {
+                if (!(e.getStatus().getCode() == Status.Code.UNAVAILABLE && i < (isWrite ? writeServers.size() : allServers.size()) - 1)) {
                     channel.shutdown();
                     throw e;
                 }
