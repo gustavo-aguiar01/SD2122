@@ -20,12 +20,13 @@ import java.util.List;
 public class ClassFrontend {
 
     private final ClassNamingServerServiceBlockingStub namingServerStub;
+    private final ManagedChannel channel;
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     public ClassFrontend(String nameServerHostname, int nameServerPort) {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(nameServerHostname, nameServerPort).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress(nameServerHostname, nameServerPort).usePlaintext().build();
         namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(channel);
     }
 
@@ -104,6 +105,7 @@ public class ClassFrontend {
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
                 DebugMessage.debug("Got the following response: " + message, null, DEBUG_FLAG);
+                serverChannel.shutdown();
 
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
@@ -117,4 +119,6 @@ public class ClassFrontend {
         }
         return message;
     }
+
+    public void shutdown() { channel.shutdown(); }
 }

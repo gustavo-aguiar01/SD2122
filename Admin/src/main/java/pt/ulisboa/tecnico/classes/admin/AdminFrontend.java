@@ -1,13 +1,17 @@
 package pt.ulisboa.tecnico.classes.admin;
 
-import io.grpc.Channel;
-import io.grpc.StatusRuntimeException;
+import io.grpc.*;
 import pt.ulisboa.tecnico.classes.ClientFrontend;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
-import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
+import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class AdminFrontend extends ClientFrontend {
@@ -77,37 +81,55 @@ public class AdminFrontend extends ClientFrontend {
 
     /**
      * "dump" client remote call facade
+     * @param primary
      * @return String
      * @throws RuntimeException
      */
-    public String dump() throws RuntimeException {
+    public String dump(String primary) throws RuntimeException {
 
         DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
-        DumpRequest request = DumpRequest.getDefaultInstance();
-        DumpResponse response;
 
         try {
-            response = (DumpResponse) exchangeMessages(request,
-                    AdminServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
-                    AdminServiceGrpc.AdminServiceBlockingStub.class.getMethod("dump", DumpRequest.class),
-                    x -> (((DumpResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), false);
-
-            ResponseCode code = response.getCode();
-            String message = Stringify.format(code);
-            DebugMessage.debug("Got the following response : " + message, null, DEBUG_FLAG);
-
-            if (response.getCode() != ResponseCode.OK) {
-                return message;
-            } else {
-                DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
-                return Stringify.format(response.getClassState());
-            }
-        } catch (StatusRuntimeException e){
-            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
             throw new RuntimeException(e.getStatus().getDescription());
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
         }
+
+        StringBuilder builder = new StringBuilder();
+
+        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+
+            DebugMessage.debug("Dumping from " + (primary.equals("P") ? "primary" : "secondary") + " server @ " + sa.getHost() + ":" + sa.getPort(),
+                    null, DEBUG_FLAG);
+            DumpRequest request = DumpRequest.getDefaultInstance();
+            DumpResponse response;
+            String message;
+
+            try {
+                ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.dump(request);
+
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response: " + message, null, DEBUG_FLAG);
+                if (response.getCode() != ResponseCode.OK) {
+                    builder.append(message + "\n");
+                } else {
+                    DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(response.getClassState()));
+                }
+            } catch (StatusRuntimeException e) {
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+    return builder.toString();
     }
 
     /**

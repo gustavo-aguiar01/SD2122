@@ -162,7 +162,7 @@ public class ClassServer {
     try {
       classFrontend.register("Turmas", host, port, primary);
     } catch (RuntimeException e) {
-      ErrorMessage.error(e.getMessage());
+      ErrorMessage.fatalError(e.getMessage());
       System.exit(1);
     }
 
@@ -181,20 +181,25 @@ public class ClassServer {
     }
 
     // Every second the primary server propagates its state to the secondary server
+    Timer timer;
+    TimerTask task = new PropagateState();
     if (serverState.primary) {
-      Timer timer = new Timer();
-      timer.schedule(new PropagateState(), 0, 1000);
+      timer = new Timer();
+      timer.schedule(task, 0, 11000);
     }
-
-    server.start();
 
     // Make sure to delete the server from naming server upon termination
     class DeleteFromNamingServer extends Thread {
       public void run() {
+        task.cancel();
         try {
           classFrontend.delete("Turmas", host, port);
+          classFrontend.shutdown();
+          server.shutdownNow();
         } catch (RuntimeException e) {
-          ErrorMessage.fatalError(e.getMessage());
+          classFrontend.shutdown();
+          ErrorMessage.error(e.getMessage());
+          Runtime.getRuntime().halt(-1);
         }
       }
     }
@@ -202,6 +207,7 @@ public class ClassServer {
     Runtime runtime = Runtime.getRuntime();
     runtime.addShutdownHook(new DeleteFromNamingServer());
 
+    server.start();
     server.awaitTermination();
   }
 }

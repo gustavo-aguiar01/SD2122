@@ -10,22 +10,22 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.AbstractBlockingStub;
 import com.google.protobuf.GeneratedMessageV3;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer;
+import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public abstract class ClientFrontend {
 
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    private final ArrayDeque<ClassServerNamingServer.ServerAddress> allServers = new ArrayDeque<>();
-    private final ArrayDeque<ClassServerNamingServer.ServerAddress> writeServers = new ArrayDeque<>();
+    protected final ArrayDeque<ServerAddress> allServers = new ArrayDeque<>();
+    protected final ArrayDeque<ServerAddress> writeServers = new ArrayDeque<>();
+    protected final ArrayDeque<ServerAddress> readServers = new ArrayDeque<>();
 
     private final ClassNamingServerServiceGrpc.ClassNamingServerServiceBlockingStub namingServerStub;
     private final ManagedChannel namingServerChannel;
@@ -38,17 +38,7 @@ public abstract class ClientFrontend {
         this.serviceName = serviceName;
 
         try {
-            List<ClassServerNamingServer.Qualifier> emptyQualifiers = new ArrayList<>();
-            List<ClassServerNamingServer.Qualifier> writeQualifiers = new ArrayList<>();
-            writeQualifiers.add(ClassServerNamingServer.Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
-            setServers(allServers, emptyQualifiers);
-            setServers(writeServers, writeQualifiers);
-            DebugMessage.debug("Got the following servers:\n" +
-                    allServers.stream().map(sa ->  sa.getHost() + " : " + sa.getPort() + "\n")
-                    .collect(Collectors.joining()) + " and the following write servers\n" +
-                    writeServers.stream().map(sa ->  sa.getHost() + " : " + sa.getPort() + "\n")
-                            .collect(Collectors.joining()), "ClientFrontend Constructor", DEBUG_FLAG);
-
+            refreshServers();
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
@@ -61,11 +51,26 @@ public abstract class ClientFrontend {
      * @param qualifiers
      * @throws StatusRuntimeException
      */
-    public void setServers(Queue<ClassServerNamingServer.ServerAddress> servers, List<ClassServerNamingServer.Qualifier> qualifiers) throws StatusRuntimeException {
-        List<ClassServerNamingServer.ServerAddress> responseServers = namingServerStub.lookup(ClassServerNamingServer.LookupRequest.newBuilder()
+    public void setServers(Queue<ServerAddress> servers, List<Qualifier> qualifiers) throws StatusRuntimeException {
+        List<ServerAddress> responseServers = namingServerStub.lookup(LookupRequest.newBuilder()
                 .setServiceName(serviceName)
                 .addAllQualifiers(qualifiers).build()).getServersList();
+        servers.clear();
         servers.addAll(responseServers);
+    }
+
+    /**
+     * Refresh servers' queues according to all existing qualifiers.
+     */
+    public void refreshServers() {
+        List<Qualifier> emptyQualifiers = new ArrayList<>();
+        List<Qualifier> writeQualifiers = new ArrayList<>();
+        List<Qualifier> readQualifiers = new ArrayList<>();
+        writeQualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
+        readQualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("S").build());
+        setServers(allServers, emptyQualifiers);
+        setServers(writeServers, writeQualifiers);
+        setServers(readServers, readQualifiers);
     }
 
     public GeneratedMessageV3 exchangeMessages(GeneratedMessageV3 message,  Method stubCreator, Method stubMethod,
@@ -75,7 +80,7 @@ public abstract class ClientFrontend {
         for (int i = 0; i < (isWrite ? writeServers.size() : allServers.size()); i++) {
 
             /* choose a server according to type of operation */
-            ClassServerNamingServer.ServerAddress sa = isWrite ? writeServers.peek() : allServers.peek();
+            ServerAddress sa = isWrite ? writeServers.peek() : allServers.peek();
 
             allServers.remove(sa);
             allServers.addLast(sa);

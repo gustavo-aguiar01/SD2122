@@ -73,7 +73,7 @@ public class Admin {
       }
       else if (DUMP_CMD.equals(command)) {
         try {
-          response = frontend.dump();
+          response = frontend.dump(arguments[0]);
           System.out.println(response);
         } catch (RuntimeException e){
           throw new RuntimeException(e.getMessage());

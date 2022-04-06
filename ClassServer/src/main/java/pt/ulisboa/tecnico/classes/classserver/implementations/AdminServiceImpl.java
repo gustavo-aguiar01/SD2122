@@ -66,7 +66,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
                     .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudentsCollection()))
-                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
+                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
                     .build();
 
             response = DumpResponse.newBuilder().setCode(code)
