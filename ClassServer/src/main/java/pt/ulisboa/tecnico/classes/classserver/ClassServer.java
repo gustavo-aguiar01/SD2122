@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InvalidOperationException;
 import pt.ulisboa.tecnico.classes.classserver.implementations.*;
 
 public class ClassServer {
@@ -29,6 +30,11 @@ public class ClassServer {
 
   /* Server state class */
   public static class ClassServerState {
+
+    public enum ACCESS_TYPE {
+      READ,
+      WRITE
+    }
 
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
     private boolean active;
@@ -61,6 +67,16 @@ public class ClassServer {
 
       DebugMessage.debug("Student class returned successfully", null, DEBUG_FLAG);
       return studentClass;
+    }
+
+    public Class getStudentClassToWrite(boolean isAdmin) throws InactiveServerException,
+            InvalidOperationException{
+      if (!primary) {
+        DebugMessage.debug("Cannot execute write operation on backup server", null, DEBUG_FLAG);
+        throw new InvalidOperationException();
+      }
+      return this.getStudentClass(isAdmin);
+
     }
 
     /**
@@ -144,10 +160,10 @@ public class ClassServer {
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     try {
-        classFrontend.register("Turmas", host, port, primary);
+      classFrontend.register("Turmas", host, port, primary);
     } catch (RuntimeException e) {
-          ErrorMessage.error(e.getMessage());
-          System.exit(1);
+      ErrorMessage.fatalError(e.getMessage());
+      System.exit(1);
     }
 
     // Class that allows the primary server to repeatedly propagate its state
@@ -155,7 +171,7 @@ public class ClassServer {
       @Override
       public void run() {
         try {
-          System.out.println(classFrontend.propagateState(serverState.getStudentClass(false)));
+          DebugMessage.debug(classFrontend.propagateState(serverState.getStudentClass(false)), "propagateState", ClassServerState.DEBUG_FLAG);
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
         } catch (RuntimeException e) {
@@ -165,20 +181,25 @@ public class ClassServer {
     }
 
     // Every second the primary server propagates its state to the secondary server
+    Timer timer;
+    TimerTask task = new PropagateState();
     if (serverState.primary) {
-      Timer timer = new Timer();
-      timer.schedule(new PropagateState(), 0, 1000);
+      timer = new Timer();
+      timer.schedule(task, 0, 11000);
     }
-
-    server.start();
 
     // Make sure to delete the server from naming server upon termination
     class DeleteFromNamingServer extends Thread {
       public void run() {
+        task.cancel();
         try {
           classFrontend.delete("Turmas", host, port);
+          classFrontend.shutdown();
+          server.shutdownNow();
         } catch (RuntimeException e) {
-          ErrorMessage.fatalError(e.getMessage());
+          classFrontend.shutdown();
+          ErrorMessage.error(e.getMessage());
+          Runtime.getRuntime().halt(-1);
         }
       }
     }
@@ -186,6 +207,7 @@ public class ClassServer {
     Runtime runtime = Runtime.getRuntime();
     runtime.addShutdownHook(new DeleteFromNamingServer());
 
+    server.start();
     server.awaitTermination();
   }
 }

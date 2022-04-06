@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
+
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
@@ -38,7 +39,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.openEnrollments(request.getCapacity());
 
         } catch (InactiveServerException e) {
@@ -50,6 +51,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
 
+        } catch (InvalidOperationException e) {
+            code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
         response = OpenEnrollmentsResponse.newBuilder()
@@ -71,7 +74,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.closeEnrollments();
 
         } catch (InactiveServerException e) {
@@ -80,6 +83,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         } catch (EnrollmentsAlreadyClosedException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
 
+        } catch (InvalidOperationException e) {
+            code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
         response = CloseEnrollmentsResponse.newBuilder()
@@ -140,13 +145,15 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.revokeEnrollment(request.getStudentId());
 
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (NonExistingStudentException e) {
             code = ResponseCode.NON_EXISTING_STUDENT;
+        } catch (InvalidOperationException e) {
+            code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
         response = CancelEnrollmentResponse.newBuilder()

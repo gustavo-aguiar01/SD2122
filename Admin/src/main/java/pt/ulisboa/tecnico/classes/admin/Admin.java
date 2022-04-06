@@ -8,6 +8,11 @@ import java.util.Arrays;
 
 public class Admin {
 
+  private static final String HOSTNAME = "localhost";
+  private static final int PORT_NUMBER = 5000;
+
+  private static final String SERVICE = "Turmas";
+
   private static final String EXIT_CMD = "exit";
   private static final String ACTIVATE_CMD = "activate";
   private static final String DEACTIVATE_CMD = "deactivate";
@@ -33,11 +38,7 @@ public class Admin {
       }
     }
 
-    final String host = "localhost";
-    final int port = 8080;
-
-    AdminFrontend frontend = new AdminFrontend(host, port);
-
+    AdminFrontend frontend = new AdminFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
     Scanner scanner = new Scanner(System.in);
 
     while (true) {
@@ -72,7 +73,7 @@ public class Admin {
       }
       else if (DUMP_CMD.equals(command)) {
         try {
-          response = frontend.dump();
+          response = frontend.dump(arguments[0]);
           System.out.println(response);
         } catch (RuntimeException e){
           throw new RuntimeException(e.getMessage());

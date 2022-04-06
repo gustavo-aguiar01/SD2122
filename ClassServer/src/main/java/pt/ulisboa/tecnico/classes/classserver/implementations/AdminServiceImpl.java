@@ -11,6 +11,7 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceImplBase;
 
+
 public class AdminServiceImpl extends AdminServiceImplBase {
     ClassServer.ClassServerState serverState;
 
@@ -27,7 +28,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     public void activate (ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
 
         serverState.setActive(true);
-        ActivateResponse response = ActivateResponse.newBuilder().build();
+        ActivateResponse response = ActivateResponse.newBuilder().setCode(ResponseCode.OK).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -42,7 +43,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     public void deactivate (DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
 
         serverState.setActive(false);
-        DeactivateResponse response = DeactivateResponse.newBuilder().build();
+        DeactivateResponse response = DeactivateResponse.newBuilder().setCode(ResponseCode.OK).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -65,7 +66,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
                     .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudentsCollection()))
-                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
+                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
                     .build();
 
             response = DumpResponse.newBuilder().setCode(code)

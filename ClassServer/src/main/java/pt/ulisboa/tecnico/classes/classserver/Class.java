@@ -140,13 +140,14 @@ public class Class {
 
         capacityRestrictionLock.writeLock().lock();
         boolean fullClass = this.isFullClass();
-        DebugMessage.debug("Class is " +
-                (!fullClass ? "" : "not") + " full, capacity = " + enrolledStudents.size(), null, DEBUG_FLAG);
+        DebugMessage.debug("Class is" +
+                (fullClass ? "" : " not") + " full, capacity = " + capacity, null, DEBUG_FLAG);
         if (fullClass) {
             capacityRestrictionLock.writeLock().unlock();
             throw new FullClassException();
         }
 
+        revokedStudents.keySet().removeIf(s -> s.equals(student.getId()));
         enrolledStudents.put(student.getId(), student);
         capacityRestrictionLock.writeLock().unlock();
 
@@ -215,8 +216,8 @@ public class Class {
     public synchronized void revokeEnrollment(String id) throws NonExistingStudentException {
 
         boolean studentEnroled = this.isStudentEnrolled(id);
-        DebugMessage.debug("Student with id = " + id + " is " +
-                (studentEnroled ? "" : "not") + " enrolled in this class", "revokeEnrollment", DEBUG_FLAG);
+        DebugMessage.debug("Student with id = " + id + " is" +
+                (studentEnroled ? "" : " not") + " enrolled in this class", "revokeEnrollment", DEBUG_FLAG);
         if (!this.isStudentEnrolled(id)) {
             throw new NonExistingStudentException();
         }
