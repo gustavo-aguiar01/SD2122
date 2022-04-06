@@ -55,7 +55,7 @@ public class ClassFrontend {
     }
 
     public String propagateState(Class studentClass) throws RuntimeException {
-        DebugMessage.debug("Calling propagateState remote call", "propagateState", DEBUG_FLAG);
+        DebugMessage.debug("Calling propagateState remote call", "propagateState", false);
 
         // Propagate state to secondary servers
         List<Qualifier> qualifiers = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ClassFrontend {
 
         String message;
         if (servers.size() == 0) {
-            DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+            DebugMessage.debug("No secondary servers available!", null, false);
             message = Stringify.format(ResponseCode.INACTIVE_SERVER);
         } else {
             message = Stringify.format(ResponseCode.OK);
@@ -98,7 +98,7 @@ public class ClassFrontend {
                         .setClassState(state).build());
             } catch (StatusRuntimeException e) {
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    DebugMessage.debug("No secondary servers available!", null, false);
                     message = Stringify.format(ResponseCode.INACTIVE_SERVER); // Edge case where backup server closed after primary checked if servers size != 0
                     return message;
                 } else {
@@ -108,11 +108,11 @@ public class ClassFrontend {
             }
             ResponseCode code = response.getCode();
             message = Stringify.format(code);
-            DebugMessage.debug("Got the following response: " + message, null, DEBUG_FLAG);
+            DebugMessage.debug("Got the following response: " + message, null, false);
             if (code == ResponseCode.OK) {
-                DebugMessage.debug("Primary server propagated successfully", null, DEBUG_FLAG);
+                DebugMessage.debug("Primary server propagated successfully", null, false);
             } else {
-                DebugMessage.debug("Primary server failed to propagate with code: " + code, null, DEBUG_FLAG);
+                DebugMessage.debug("Primary server failed to propagate with code: " + code, null, false);
             }
         }
         return message;

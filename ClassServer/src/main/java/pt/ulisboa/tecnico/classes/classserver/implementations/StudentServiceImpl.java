@@ -12,6 +12,7 @@ import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentSer
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+import static io.grpc.Status.INTERNAL;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class StudentServiceImpl extends StudentServiceImplBase {
@@ -47,7 +48,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            Class studentClass = serverState.getStudentClassToWrite(false);
 
             String id = request.getStudent().getStudentId();
             String name = request.getStudent().getStudentName();
@@ -66,6 +67,10 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
+
+        } catch (InvalidOperationException e) {
+            code = ResponseCode.WRITING_NOT_SUPPORTED;
+
         }
 
         response = EnrollResponse.newBuilder()
@@ -99,7 +104,6 @@ public class StudentServiceImpl extends StudentServiceImplBase {
             response = StudentClassServer.ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = ListClassResponse.newBuilder()
@@ -108,5 +112,6 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 }

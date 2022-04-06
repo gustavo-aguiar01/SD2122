@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InvalidOperationException;
 import pt.ulisboa.tecnico.classes.classserver.implementations.*;
 
 public class ClassServer {
@@ -29,6 +30,11 @@ public class ClassServer {
 
   /* Server state class */
   public static class ClassServerState {
+
+    public enum ACCESS_TYPE {
+      READ,
+      WRITE
+    }
 
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
     private boolean active;
@@ -61,6 +67,16 @@ public class ClassServer {
 
       DebugMessage.debug("Student class returned successfully", null, DEBUG_FLAG);
       return studentClass;
+    }
+
+    public Class getStudentClassToWrite(boolean isAdmin) throws InactiveServerException,
+            InvalidOperationException{
+      if (!primary) {
+        DebugMessage.debug("Cannot execute write operation on backup server", null, DEBUG_FLAG);
+        throw new InvalidOperationException();
+      }
+      return this.getStudentClass(isAdmin);
+
     }
 
     /**

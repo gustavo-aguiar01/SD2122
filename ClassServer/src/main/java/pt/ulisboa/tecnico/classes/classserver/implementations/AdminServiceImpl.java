@@ -11,6 +11,7 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ClassState;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceImplBase;
 
+
 public class AdminServiceImpl extends AdminServiceImplBase {
     ClassServer.ClassServerState serverState;
 

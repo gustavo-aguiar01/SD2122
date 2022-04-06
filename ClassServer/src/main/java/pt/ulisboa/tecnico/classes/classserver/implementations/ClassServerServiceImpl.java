@@ -9,6 +9,7 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerServiceGrpc.*;
 
+
 public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
     ClassServer.ClassServerState serverState;
@@ -32,6 +33,7 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         }
+
         response = PropagateStateResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
