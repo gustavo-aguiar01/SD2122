@@ -34,6 +34,12 @@ public class AdminFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
 
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
+        }
+
         // refresh server list
         try {
             super.refreshServers();
@@ -50,6 +56,8 @@ public class AdminFrontend extends ClientFrontend {
             ActivateResponse response;
 
             // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+                    null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
@@ -62,6 +70,8 @@ public class AdminFrontend extends ClientFrontend {
                 Stringify.format(response.getCode());
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
+                DebugMessage.debug("Got the following response " + message,
+                        null, DEBUG_FLAG);
                 builder.append(message + "\n");
 
             } catch (StatusRuntimeException e){
@@ -89,6 +99,12 @@ public class AdminFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
 
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
+        }
+
         // refresh server list
         try {
             super.refreshServers();
@@ -104,6 +120,8 @@ public class AdminFrontend extends ClientFrontend {
             DeactivateResponse response;
 
             // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+                    null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
@@ -116,6 +134,8 @@ public class AdminFrontend extends ClientFrontend {
                 Stringify.format(response.getCode());
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
+                DebugMessage.debug("Got the following response " + message,
+                        null, DEBUG_FLAG);
                 builder.append(message + "\n");
 
             } catch (StatusRuntimeException e){
@@ -146,6 +166,12 @@ public class AdminFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
 
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
+        }
+
         // refresh server list
         try {
             super.refreshServers();
@@ -164,6 +190,8 @@ public class AdminFrontend extends ClientFrontend {
             DumpResponse response;
 
             // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+                    null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
