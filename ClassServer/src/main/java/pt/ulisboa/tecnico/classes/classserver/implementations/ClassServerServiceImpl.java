@@ -1,14 +1,14 @@
 package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
-import pt.ulisboa.tecnico.classes.classserver.domain.Class;
+
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
-import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
+import pt.ulisboa.tecnico.classes.classserver.ClassUtilities;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InvalidOperationException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerServiceGrpc.*;
-
 
 public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
@@ -24,16 +24,14 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         PropagateStateResponse response;
         ClassState state = request.getClassState();
         try {
-            Class studentClass = serverState.getStudentClass(false);
-            studentClass.setCapacity(state.getCapacity());
-            studentClass.setRegistrationsOpen(state.getOpenEnrollments());
-            studentClass.setEnrolledStudents(ClassUtilities.studentsToDomain(state.getEnrolledList()));
-            studentClass.setDiscardedStudents(ClassUtilities.studentsToDomain(state.getDiscardedList()));
+            serverState.getStudentClass(false)
+                    .setClassState(state.getCapacity(), state.getOpenEnrollments(),
+                            ClassUtilities.studentsToDomain(state.getEnrolledList()),
+                            ClassUtilities.studentsToDomain(state.getDiscardedList()));
             code = ResponseCode.OK;
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         }
-
         response = PropagateStateResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

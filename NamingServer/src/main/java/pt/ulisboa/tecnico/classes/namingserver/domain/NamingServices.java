@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class NamingServices {
@@ -17,30 +18,18 @@ public class NamingServices {
     /* Set flag to true to print debug messages. */
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
+    private ReentrantReadWriteLock servicesLock = new ReentrantReadWriteLock();
+
     private Map<String, ServiceEntry> serviceEntries;
 
     public NamingServices() {
         this.serviceEntries = new HashMap<String, ServiceEntry>();
     }
 
-    public NamingServices(Map<String, ServiceEntry> serviceEntries) {
-        this.serviceEntries = serviceEntries;
-    }
-
-    /**
-     * funcion that adds a new service and a server to
-     * the naming server records
-     * @param serviceName
-     * @param host
-     * @param port
-     * @param qualifiers
-     * @throws InvalidServerInfoException
-     * @throws AlreadyExistingServerException
-     * @throws AlreadyExistingPrimaryServerException
-     */
     public void addService(String serviceName, String host, int port, Map<String, String> qualifiers)
             throws InvalidServerInfoException, AlreadyExistingServerException, AlreadyExistingPrimaryServerException{
 
+        servicesLock.writeLock().lock();
         DebugMessage.debug("Inserting server " + host + ":" + port + " with the following qualifiers:\n" +
                         qualifiers.keySet().stream().map(q ->  q + " : " + qualifiers.get(q) + "\n")
                                 .collect(Collectors.joining()) + "to service " + serviceName,
@@ -50,6 +39,7 @@ public class NamingServices {
                 !(qualifiers.containsKey("primaryStatus")) ||
                 !(Arrays.asList(new String[]{"P", "S"}).contains(qualifiers.get("primaryStatus")))) {
             DebugMessage.debug("Invalid server info", null, DEBUG_FLAG);
+            servicesLock.writeLock().unlock();
             throw new InvalidServerInfoException();
         }
 
@@ -62,6 +52,7 @@ public class NamingServices {
         if (serviceEntries.get(serviceName).getServerEntries().stream()
                 .anyMatch(se -> se.getHost().equals(host) && se.getPort() == port)) {
             DebugMessage.debug("Server host:port already registered", null, DEBUG_FLAG);
+            servicesLock.writeLock().unlock();
             throw new AlreadyExistingServerException();
         }
 
@@ -69,21 +60,17 @@ public class NamingServices {
                 serviceEntries.get(serviceName).getServerEntries().stream()
                 .anyMatch(se -> se.getQualifierValue("primaryStatus").equals("P"))) {
             DebugMessage.debug("Primary server already registered for given service", null, DEBUG_FLAG);
+            servicesLock.writeLock().unlock();
             throw new AlreadyExistingPrimaryServerException();
         }
 
         serviceEntries.get(serviceName).addServer(new ServerEntry(host, port, qualifiers));
-
+        servicesLock.writeLock().unlock();
     }
 
-    /**
-     * filter naming server for servers of a given
-     * service and with some given attributes
-     * @param serviceName
-     * @param qualifiers
-     * @return List<ServerEntry>
-     */
     public List<ServerEntry> lookupServersOfService (String serviceName, Map<String, String> qualifiers) {
+
+        servicesLock.readLock().lock();
 
         DebugMessage.debug("Looking up server with the following qualifiers:\n" +
                         qualifiers.keySet().stream().map(q ->  q + " : " + qualifiers.get(q) + "\n")
@@ -92,6 +79,7 @@ public class NamingServices {
         if (!serviceEntries.containsKey(serviceName)) {
             DebugMessage.debug("The service associated with the service name " + serviceName + " does not exist",
                     null, DEBUG_FLAG);
+            servicesLock.readLock().unlock();
             return new ArrayList<ServerEntry>();
         }
 
@@ -99,23 +87,24 @@ public class NamingServices {
                 null, DEBUG_FLAG);
 
         // Get all server entries whose qualifiers match the given qualifiers element by element
-        return serviceEntries.get(serviceName).getServerEntries().stream()
+        List<ServerEntry> result = serviceEntries.get(serviceName).getServerEntries().stream()
                 .filter(se -> qualifiers.keySet().stream()
                         .allMatch(q-> qualifiers.get(q) != null && se.getQualifierValue(q).equals(qualifiers.get(q))))
                 .collect(Collectors.toList());
-    }
 
-    /**
-     * remove an entry from the naming server
-     * @param serviceName
-     * @param host
-     * @param port
-     */
+        servicesLock.readLock().unlock();
+
+        return result;
+    }
+  
     public void deleteService(String serviceName, String host, int port) {
+
+        servicesLock.writeLock().lock();
         DebugMessage.debug("Deleting server " + host + ":" + port + " from service " + serviceName, "deleteService", DEBUG_FLAG);
         ServiceEntry serviceEntry = serviceEntries.get(serviceName);
         if (serviceEntry == null) {
             DebugMessage.debug("Service " + serviceName + " does not exist!", null, DEBUG_FLAG);
+            servicesLock.writeLock().unlock();
             return;
         }
         Set<ServerEntry> serverEntries = serviceEntry.getServerEntries();
@@ -123,5 +112,6 @@ public class NamingServices {
             .filter(se -> se.getHost().equals(host) && se.getPort() == port)
             .collect(Collectors.toSet());
         serverEntries.removeAll(entriesToRemove);
+        servicesLock.writeLock().unlock();
     }
 }

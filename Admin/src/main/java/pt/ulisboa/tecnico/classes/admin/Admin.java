@@ -38,7 +38,12 @@ public class Admin {
       }
     }
 
-    AdminFrontend frontend = new AdminFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    AdminFrontend adminFrontend = null;
+    try {
+      adminFrontend = new AdminFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    } catch (RuntimeException e) {
+      ErrorMessage.fatalError(e.getMessage());
+    }
     Scanner scanner = new Scanner(System.in);
 
     while (true) {
@@ -51,29 +56,29 @@ public class Admin {
 
       String response;
       if (EXIT_CMD.equals(command)) {
-        frontend.shutdown();
+        adminFrontend.shutdown();
         scanner.close();
         System.exit(0);
       }
-      else if (ACTIVATE_CMD.equals(command) && arguments.length == 1) {
+      else if (ACTIVATE_CMD.equals(command)) {
         try {
-          response = frontend.activate(arguments[0]);
+          response = adminFrontend.activate();
           System.out.println(response);
         } catch (RuntimeException e) {
           System.out.println(e.getMessage());
         }
       }
-      else if (DEACTIVATE_CMD.equals(command) && arguments.length == 1) {
+      else if (DEACTIVATE_CMD.equals(command)) {
         try {
-          response = frontend.deactivate(arguments[0]);
+          response = adminFrontend.deactivate();
           System.out.println(response);
         } catch (RuntimeException e){
           throw new RuntimeException(e.getMessage());
         }
       }
-      else if (DUMP_CMD.equals(command) && arguments.length == 1) {
+      else if (DUMP_CMD.equals(command)) {
         try {
-          response = frontend.dump(arguments[0]);
+          response = adminFrontend.dump(arguments[0]);
           System.out.println(response);
         } catch (RuntimeException e){
           throw new RuntimeException(e.getMessage());

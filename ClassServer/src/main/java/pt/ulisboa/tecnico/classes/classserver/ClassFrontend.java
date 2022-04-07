@@ -61,7 +61,7 @@ public class ClassFrontend {
         }
     }
 
-    public String propagateState(Class studentClass) throws RuntimeException {
+    public String propagateState(ClassStateReport studentClass) throws RuntimeException {
 
         DebugMessage.debug("Calling propagateState remote call", "propagateState", DEBUG_FLAG);
         // Propagate state to secondary servers
@@ -92,8 +92,8 @@ public class ClassFrontend {
                     null, DEBUG_FLAG);
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
-                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudentsCollection()))
-                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
+                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudents()))
+                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
             PropagateStateRequest request = PropagateStateRequest.newBuilder().setClassState(state).build();
             PropagateStateResponse response;

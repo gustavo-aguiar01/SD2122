@@ -47,7 +47,13 @@ public class Student {
     }
     final String name = nameBuilder.toString();
 
-    final StudentFrontend studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    StudentFrontend studentFrontend = null;
+    try {
+      studentFrontend = new StudentFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    } catch (RuntimeException e) {
+      ErrorMessage.fatalError(e.getMessage());
+    }
+
     while (true) {
       System.out.printf("> ");
       String line = scanner.nextLine();
