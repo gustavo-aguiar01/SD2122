@@ -30,26 +30,64 @@ public class AdminFrontend extends ClientFrontend {
      * @return String
      * @throws RuntimeException
      */
-    public String activate() throws RuntimeException {
+    public String activate(String primary) throws RuntimeException {
 
         DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
-        ActivateRequest request = ActivateRequest.getDefaultInstance();
-        ActivateResponse response;
 
-        try {
-            response = (ActivateResponse) exchangeMessages(request,
-                    AdminServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
-                    AdminServiceGrpc.AdminServiceBlockingStub.class.getMethod("activate", ActivateRequest.class),
-                    x -> (((ActivateResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
-        } catch (StatusRuntimeException e){
-            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
-            throw new RuntimeException(e.getStatus().getDescription());
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
         }
 
-        return Stringify.format(response.getCode());
+        // refresh server list
+        try {
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
 
+        StringBuilder builder = new StringBuilder();
+
+        // refresh server list
+        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+
+            ActivateRequest request = ActivateRequest.getDefaultInstance();
+            ActivateResponse response;
+
+            // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
+                    null, DEBUG_FLAG);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+            String message;
+
+            try {
+                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.activate(request);
+                channel.shutdown();
+
+
+                Stringify.format(response.getCode());
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response " + message,
+                        null, DEBUG_FLAG);
+                builder.append(message + "\n");
+
+            } catch (StatusRuntimeException e){
+                channel.shutdown();
+
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+
+        return builder.toString();
     }
 
     /**
@@ -57,25 +95,64 @@ public class AdminFrontend extends ClientFrontend {
      * @return String
      * @throws RuntimeException
      */
-    public String deactivate() throws RuntimeException {
+    public String deactivate(String primary) throws RuntimeException {
 
         DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
-        DeactivateRequest request = DeactivateRequest.getDefaultInstance();
-        DeactivateResponse response;
 
-        try {
-            response = (DeactivateResponse) exchangeMessages(request,
-                    AdminServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
-                    AdminServiceGrpc.AdminServiceBlockingStub.class.getMethod("deactivate", DeactivateRequest.class),
-                    x -> (((DeactivateResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
-        } catch (StatusRuntimeException e){
-            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
-            throw new RuntimeException(e.getStatus().getDescription());
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
         }
 
-        return Stringify.format(response.getCode());
+        // refresh server list
+        try {
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        // refresh server list
+        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+            DeactivateRequest request = DeactivateRequest.getDefaultInstance();
+            DeactivateResponse response;
+
+            // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
+                    null, DEBUG_FLAG);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+            String message;
+
+            try {
+                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.deactivate(request);
+                channel.shutdown();
+
+
+                Stringify.format(response.getCode());
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response " + message,
+                        null, DEBUG_FLAG);
+                builder.append(message + "\n");
+
+            } catch (StatusRuntimeException e){
+                channel.shutdown();
+
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+
+
+        return builder.toString();
 
     }
 
@@ -89,6 +166,13 @@ public class AdminFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
 
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed, " + primary,
+                null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed, " + primary);
+        }
+
+        // refresh server list
         try {
             super.refreshServers();
         } catch (StatusRuntimeException e) {
@@ -101,14 +185,21 @@ public class AdminFrontend extends ClientFrontend {
 
             DebugMessage.debug("Dumping from " + (primary.equals("P") ? "primary" : "secondary") + " server @ " + sa.getHost() + ":" + sa.getPort(),
                     null, DEBUG_FLAG);
+
             DumpRequest request = DumpRequest.getDefaultInstance();
             DumpResponse response;
+
+            // create communication channel with server address = sa
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
+                    null, DEBUG_FLAG);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
             try {
-                ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                // make the remote call to the server with server address = sa
                 AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
                 response = stub.dump(request);
+                channel.shutdown();
 
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
@@ -120,6 +211,8 @@ public class AdminFrontend extends ClientFrontend {
                     builder.append(Stringify.format(response.getClassState()));
                 }
             } catch (StatusRuntimeException e) {
+                channel.shutdown();
+
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
                     DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0

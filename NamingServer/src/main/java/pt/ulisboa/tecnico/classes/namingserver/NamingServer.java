@@ -15,6 +15,12 @@ public class NamingServer {
   private static int port = 5000;
   private static String host = "localhost";
 
+  /**
+   * Naming server class main functionality
+   * @param args
+   * @throws IOException
+   * @throws InterruptedException
+   */
   public static void main(String[] args) throws IOException, InterruptedException {
 
     System.out.println(NamingServer.class.getSimpleName());

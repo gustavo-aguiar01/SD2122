@@ -76,6 +76,16 @@ public abstract class ClientFrontend {
         setServers(readServers, readQualifiers);
     }
 
+    /**
+     * generic function to exchange messages with a cluster
+     * of servers that implement a given service 
+     * @param message
+     * @param stubCreator
+     * @param stubMethod
+     * @param continueCondition
+     * @param isWrite
+     * @return GeneratedMessageV3
+     */
     public GeneratedMessageV3 exchangeMessages(GeneratedMessageV3 message,  Method stubCreator, Method stubMethod,
                                                Function<GeneratedMessageV3, Boolean> continueCondition, boolean isWrite) {
         GeneratedMessageV3 response = null;
