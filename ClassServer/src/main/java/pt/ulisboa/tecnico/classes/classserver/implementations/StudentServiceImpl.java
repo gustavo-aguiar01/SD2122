@@ -2,8 +2,10 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
 
-import pt.ulisboa.tecnico.classes.classserver.*;
-import pt.ulisboa.tecnico.classes.classserver.Class;
+import pt.ulisboa.tecnico.classes.classserver.domain.*;
+import pt.ulisboa.tecnico.classes.classserver.domain.Class;
+import pt.ulisboa.tecnico.classes.classserver.ClassServer;
+import pt.ulisboa.tecnico.classes.classserver.domain.ClassStateReport;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentServiceImplBase;

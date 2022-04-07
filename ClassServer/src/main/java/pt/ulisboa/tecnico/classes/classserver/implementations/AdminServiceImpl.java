@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.classserver.*;
-import pt.ulisboa.tecnico.classes.classserver.domain.Class;
+import pt.ulisboa.tecnico.classes.classserver.domain.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;

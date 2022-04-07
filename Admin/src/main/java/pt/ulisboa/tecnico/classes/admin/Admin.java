@@ -60,27 +60,27 @@ public class Admin {
         scanner.close();
         System.exit(0);
       }
-      else if (ACTIVATE_CMD.equals(command)) {
+      else if (ACTIVATE_CMD.equals(command) && arguments.length == 1) {
         try {
-          response = adminFrontend.activate();
+          response = adminFrontend.activate(arguments[0]);
           System.out.println(response);
         } catch (RuntimeException e) {
           System.out.println(e.getMessage());
         }
       }
-      else if (DEACTIVATE_CMD.equals(command)) {
+      else if (DEACTIVATE_CMD.equals(command) && arguments.length == 1) {
         try {
-          response = adminFrontend.deactivate();
+          response = adminFrontend.deactivate(arguments[0]);
           System.out.println(response);
         } catch (RuntimeException e){
           throw new RuntimeException(e.getMessage());
         }
       }
-      else if (DUMP_CMD.equals(command)) {
+      else if (DUMP_CMD.equals(command) && arguments.length == 1) {
         try {
           response = adminFrontend.dump(arguments[0]);
           System.out.println(response);
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
           throw new RuntimeException(e.getMessage());
         }
       } else {

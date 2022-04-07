@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.classes.classserver;
+package pt.ulisboa.tecnico.classes.classserver.domain;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -3,14 +3,13 @@ package pt.ulisboa.tecnico.classes.classserver.domain;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+
 import java.util.HashMap;
 import java.util.Collection;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Class {
-
-    private static int i = 0;
 
     int capacity;
     boolean registrationsOpen = false;
@@ -247,7 +246,7 @@ public class Class {
      * @return the report of the class
      */
     public ClassStateReport reportClassState() {
-        DebugMessage.debug("Reporting class state...  " + i++, "reportClassState", DEBUG_FLAG);
+        DebugMessage.debug("Reporting class state...  ", "reportClassState", DEBUG_FLAG);
         stateConsistencyLock.readLock().lock();
         ClassStateReport report = new ClassStateReport(capacity, areRegistrationsOpen(), getEnrolledStudentsCollection(), getRevokedStudentsCollection());
         stateConsistencyLock.readLock().unlock();
@@ -263,7 +262,7 @@ public class Class {
      */
     public void setClassState(int capacity, boolean areRegistrationsOpen,
                               Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents) {
-        DebugMessage.debug("Setting received class state... " + i++, "setClassState", DEBUG_FLAG);
+        DebugMessage.debug("Setting received class state... ", "setClassState", DEBUG_FLAG);
         stateConsistencyLock.writeLock().lock();
         setCapacity(capacity);
         setRegistrationsOpen(areRegistrationsOpen);
