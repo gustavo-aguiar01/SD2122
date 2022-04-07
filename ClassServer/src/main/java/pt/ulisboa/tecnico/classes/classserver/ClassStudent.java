@@ -11,6 +11,14 @@ public class ClassStudent {
     }
 
     /**
+     * make a deep copy of this ClassStudent
+     * @return ClassStudent
+     */
+    public ClassStudent copyClassStudent() {
+       return new ClassStudent(this.id, this.name);
+    }
+
+    /**
      * Id getter
      * @return String
      */

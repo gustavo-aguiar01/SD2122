@@ -62,13 +62,16 @@ public abstract class ClientFrontend {
     /**
      * Refresh servers' queues according to all existing qualifiers.
      */
-    public void refreshServers() {
+    public void refreshServers() throws RuntimeException {
         List<Qualifier> emptyQualifiers = new ArrayList<>();
         List<Qualifier> writeQualifiers = new ArrayList<>();
         List<Qualifier> readQualifiers = new ArrayList<>();
         writeQualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("P").build());
         readQualifiers.add(Qualifier.newBuilder().setName("primaryStatus").setValue("S").build());
         setServers(allServers, emptyQualifiers);
+        if (allServers.size() == 0) {
+            throw new RuntimeException("No servers available for service " + serviceName + "!");
+        }
         setServers(writeServers, writeQualifiers);
         setServers(readServers, readQualifiers);
     }

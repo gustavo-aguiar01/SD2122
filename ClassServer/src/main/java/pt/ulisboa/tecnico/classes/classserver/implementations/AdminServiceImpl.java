@@ -61,12 +61,12 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(true);
+            ClassStateReport studentClass = serverState.getStudentClass(true).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
-                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudentsCollection()))
-                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
+                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudents()))
+                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
 
             response = DumpResponse.newBuilder().setCode(code)

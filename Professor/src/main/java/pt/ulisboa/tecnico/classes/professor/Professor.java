@@ -39,7 +39,12 @@ public class Professor {
     }
 
     // Frontend connection establishment
-    ProfessorFrontend frontend = new ProfessorFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    ProfessorFrontend professorFrontend = null;
+    try {
+      professorFrontend= new ProfessorFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
+    } catch (RuntimeException e) {
+      ErrorMessage.fatalError(e.getMessage());
+    }
     Scanner scanner = new Scanner(System.in);
 
     while(true) {
@@ -54,7 +59,7 @@ public class Professor {
         }
         try {
           int capacity = Integer.parseInt(line[1]);
-          System.out.println(frontend.openEnrollments(capacity));
+          System.out.println(professorFrontend.openEnrollments(capacity));
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
           System.exit(1);
@@ -68,7 +73,7 @@ public class Professor {
           continue;
         }
         try {
-          System.out.println(frontend.closeEnrollments());
+          System.out.println(professorFrontend.closeEnrollments());
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
           System.exit(1);
@@ -83,7 +88,7 @@ public class Professor {
           continue;
         }
         try {
-          System.out.println(frontend.listClass());
+          System.out.println(professorFrontend.listClass());
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
           System.exit(1);
@@ -97,7 +102,7 @@ public class Professor {
           continue;
         }
         try {
-          System.out.println(frontend.cancelEnrollment(line[1]));
+          System.out.println(professorFrontend.cancelEnrollment(line[1]));
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
           System.exit(1);
@@ -106,7 +111,7 @@ public class Professor {
 
       // Local command to terminate - exit cmd
       if (EXIT_CMD.equals(line[0])) {
-        frontend.shutdown();
+        professorFrontend.shutdown();
         scanner.close();
         System.exit(0);
       }

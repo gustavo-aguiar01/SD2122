@@ -2,17 +2,14 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
 
-import pt.ulisboa.tecnico.classes.classserver.ClassServer;
-import pt.ulisboa.tecnico.classes.classserver.ClassStudent;
+import pt.ulisboa.tecnico.classes.classserver.*;
 import pt.ulisboa.tecnico.classes.classserver.Class;
-import pt.ulisboa.tecnico.classes.classserver.ClassUtilities;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
-import static io.grpc.Status.INTERNAL;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class StudentServiceImpl extends StudentServiceImplBase {
@@ -93,12 +90,12 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
-            Class studentClass = serverState.getStudentClass(false);
+            ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
-                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudentsCollection()))
-                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudentsCollection()))
+                    .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudents()))
+                    .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
 
             response = StudentClassServer.ListClassResponse.newBuilder().setCode(code)

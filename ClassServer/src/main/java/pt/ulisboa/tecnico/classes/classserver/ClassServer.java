@@ -171,7 +171,7 @@ public class ClassServer {
       @Override
       public void run() {
         try {
-          DebugMessage.debug(classFrontend.propagateState(serverState.getStudentClass(false)), "propagateState", ClassServerState.DEBUG_FLAG);
+          DebugMessage.debug(classFrontend.propagateState(serverState.getStudentClass(false).reportClassState()), "propagateState", ClassServerState.DEBUG_FLAG);
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
         } catch (RuntimeException e) {
@@ -184,8 +184,9 @@ public class ClassServer {
     Timer timer;
     TimerTask task = new PropagateState();
     if (serverState.primary) {
+      System.out.println("VAI PATCHON!");
       timer = new Timer();
-      timer.schedule(task, 0, 11000);
+      timer.schedule(task, 0, 5000);
     }
 
     // Make sure to delete the server from naming server upon termination

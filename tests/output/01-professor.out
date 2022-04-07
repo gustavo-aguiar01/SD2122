@@ -1,17 +1,1 @@
-> ClassState{
-	capacity=0,
-	openEnrollments=false,
-	enrolled=[],
-	discarded=[]
-}
-
-> The action completed successfully.
-
-> ClassState{
-	capacity=1,
-	openEnrollments=true,
-	enrolled=[],
-	discarded=[]
-}
-
 > 
