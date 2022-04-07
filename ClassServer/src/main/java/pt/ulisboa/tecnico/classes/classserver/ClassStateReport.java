@@ -18,7 +18,7 @@ public class ClassStateReport {
         this.capacity = capacity;
         this.areRegistrationsOpen = areRegistrationsOpen;
         this.enrolledStudents.addAll(enrolledStudents.stream().map(ClassStudent::copyClassStudent).toList());
-        this.enrolledStudents.addAll(revokedStudents.stream().map(ClassStudent::copyClassStudent).toList());
+        this.revokedStudents.addAll(revokedStudents.stream().map(ClassStudent::copyClassStudent).toList());
     }
 
     public int getCapacity() {

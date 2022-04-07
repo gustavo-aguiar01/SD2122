@@ -184,7 +184,6 @@ public class ClassServer {
     Timer timer;
     TimerTask task = new PropagateState();
     if (serverState.primary) {
-      System.out.println("VAI PATCHON!");
       timer = new Timer();
       timer.schedule(task, 0, 5000);
     }
