@@ -5,9 +5,9 @@ import io.grpc.stub.StreamObserver;
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
-import pt.ulisboa.tecnico.classes.classserver.Class;
-import pt.ulisboa.tecnico.classes.classserver.ClassStudent;
-import pt.ulisboa.tecnico.classes.classserver.ClassUtilities;
+import pt.ulisboa.tecnico.classes.classserver.domain.Class;
+import pt.ulisboa.tecnico.classes.classserver.domain.ClassStudent;
+import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;

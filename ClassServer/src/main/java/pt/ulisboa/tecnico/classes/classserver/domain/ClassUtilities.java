@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.classes.classserver;
+package pt.ulisboa.tecnico.classes.classserver.domain;
 
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 

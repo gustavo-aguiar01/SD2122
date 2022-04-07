@@ -6,6 +6,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
+import pt.ulisboa.tecnico.classes.classserver.domain.Class;
+import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;

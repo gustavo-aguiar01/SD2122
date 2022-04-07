@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.classes.classserver;
+package pt.ulisboa.tecnico.classes.classserver.domain;
 
 public class ClassStudent {
 

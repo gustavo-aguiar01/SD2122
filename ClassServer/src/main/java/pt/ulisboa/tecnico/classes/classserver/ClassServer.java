@@ -12,6 +12,7 @@ import java.util.TimerTask;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
+import pt.ulisboa.tecnico.classes.classserver.domain.Class;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InvalidOperationException;
 import pt.ulisboa.tecnico.classes.classserver.implementations.*;
