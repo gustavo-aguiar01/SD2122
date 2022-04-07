@@ -56,7 +56,7 @@ public class AdminFrontend extends ClientFrontend {
             ActivateResponse response;
 
             // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
                     null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
@@ -120,7 +120,7 @@ public class AdminFrontend extends ClientFrontend {
             DeactivateResponse response;
 
             // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
                     null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
@@ -190,7 +190,7 @@ public class AdminFrontend extends ClientFrontend {
             DumpResponse response;
 
             // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "",,
+            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
                     null, DEBUG_FLAG);
             ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
