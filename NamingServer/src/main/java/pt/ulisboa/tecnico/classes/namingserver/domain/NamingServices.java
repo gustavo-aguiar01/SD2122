@@ -27,6 +27,17 @@ public class NamingServices {
         this.serviceEntries = serviceEntries;
     }
 
+    /**
+     * funcion that adds a new service and a server to
+     * the naming server records
+     * @param serviceName
+     * @param host
+     * @param port
+     * @param qualifiers
+     * @throws InvalidServerInfoException
+     * @throws AlreadyExistingServerException
+     * @throws AlreadyExistingPrimaryServerException
+     */
     public void addService(String serviceName, String host, int port, Map<String, String> qualifiers)
             throws InvalidServerInfoException, AlreadyExistingServerException, AlreadyExistingPrimaryServerException{
 
@@ -65,6 +76,13 @@ public class NamingServices {
 
     }
 
+    /**
+     * filter naming server for servers of a given
+     * service and with some given attributes
+     * @param serviceName
+     * @param qualifiers
+     * @return List<ServerEntry>
+     */
     public List<ServerEntry> lookupServersOfService (String serviceName, Map<String, String> qualifiers) {
 
         DebugMessage.debug("Looking up server with the following qualifiers:\n" +
@@ -86,7 +104,13 @@ public class NamingServices {
                         .allMatch(q-> qualifiers.get(q) != null && se.getQualifierValue(q).equals(qualifiers.get(q))))
                 .collect(Collectors.toList());
     }
-  
+
+    /**
+     * remove an entry from the naming server
+     * @param serviceName
+     * @param host
+     * @param port
+     */
     public void deleteService(String serviceName, String host, int port) {
         DebugMessage.debug("Deleting server " + host + ":" + port + " from service " + serviceName, "deleteService", DEBUG_FLAG);
         ServiceEntry serviceEntry = serviceEntries.get(serviceName);

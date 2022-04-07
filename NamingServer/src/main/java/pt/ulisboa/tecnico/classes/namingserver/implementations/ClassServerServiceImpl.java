@@ -23,6 +23,12 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
 
     NamingServices services = new NamingServices();
 
+    /**
+     * "register" server remote call facade
+     *      adds a new server to the name server records
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void register(RegisterRequest request, StreamObserver<RegisterResponse> responseObserver) {
 
@@ -53,6 +59,13 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
 
     }
 
+    /**
+     * "lookup" server remote call facade
+     *      returns a list of servers associated with a
+     *      given service and with some given attributes
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void lookup(LookupRequest request, StreamObserver<LookupResponse> responseObserver) {
 
@@ -69,6 +82,13 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    /**
+     * "delete" server remote call facade
+     *      removes an entry from the naming server
+     *      records
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
 
