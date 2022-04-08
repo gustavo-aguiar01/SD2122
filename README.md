@@ -60,9 +60,20 @@ To run all modules, run in each directory:
 (-debug is an optional debug flag, it is not a required argument)
 
 ### Modules
+
+* ~/A25-Turmas/NamingServer: 
+```s
+mvn exec:java -Dexec.args="<hostname> 5000 [-debug]"
+```
 * ~/A25-Turmas/ClassServer: 
 ```s
-mvn exec:java -Dexec.args="localhost 8080 P -debug"
+primary server :
+----------------
+mvn exec:java -Dexec.args="<hostname> <port> P [-debug]"
+
+secondary server :
+------------------
+mvn exec:java -Dexec.args="<hostname> <port> S [-debug]"
 ```
 * ~/A25-Turmas/Admin: 
 ```s
@@ -75,4 +86,4 @@ mvn exec:java -Dexec.args="[-debug]"
 * ~/A25-Turmas/Student: 
 ```s
 mvn exec:java -Dexec.args="<Student ID> <Student name> [-debug]"
-
+```
