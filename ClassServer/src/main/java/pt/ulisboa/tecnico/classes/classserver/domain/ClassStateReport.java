@@ -8,17 +8,19 @@ import java.util.Collection;
  */
 public class ClassStateReport {
 
-    private int capacity;
-    private boolean areRegistrationsOpen;
-    private Collection<ClassStudent> enrolledStudents = new ArrayList<>();
-    private Collection<ClassStudent> revokedStudents = new ArrayList<>();
+    private final int capacity;
+    private final boolean areRegistrationsOpen;
+    private final Collection<ClassStudent> enrolledStudents = new ArrayList<>();
+    private final Collection<ClassStudent> revokedStudents = new ArrayList<>();
 
     public ClassStateReport(int capacity, boolean areRegistrationsOpen,
                             Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents) {
+
         this.capacity = capacity;
         this.areRegistrationsOpen = areRegistrationsOpen;
         this.enrolledStudents.addAll(enrolledStudents.stream().map(ClassStudent::copyClassStudent).toList());
         this.revokedStudents.addAll(revokedStudents.stream().map(ClassStudent::copyClassStudent).toList());
+
     }
 
     public int getCapacity() {

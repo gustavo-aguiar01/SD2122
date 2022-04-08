@@ -16,13 +16,17 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public abstract class ClientFrontend {
 
-    /* Set flag to true to print debug messages. */
+    // Set flag to true to print debug messages
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
+    // writeServers - every write server for service @param "serviceName"
+    // readServers - every read server for service @param "serviceName"
+    // allServers - writeServers u readServers
     protected final ArrayDeque<ServerAddress> allServers = new ArrayDeque<>();
     protected final ArrayDeque<ServerAddress> writeServers = new ArrayDeque<>();
     protected final ArrayDeque<ServerAddress> readServers = new ArrayDeque<>();
@@ -32,17 +36,13 @@ public abstract class ClientFrontend {
 
     public final String serviceName;
 
-    public ClientFrontend(String hostname, int port, String serviceName) {
+    public final int deadlineSecs = 5;
+
+    public ClientFrontend(String hostname, int port, String serviceName) throws RuntimeException {
         this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
         this.namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(namingServerChannel);
         this.serviceName = serviceName;
-
-        try {
-            refreshServers();
-        } catch (StatusRuntimeException e) {
-            DebugMessage.debug("Runtime exception caught :" + e.getStatus().getDescription(), null, DEBUG_FLAG);
-            throw new RuntimeException(e.getStatus().getDescription());
-        }
+        refreshServers(); // This can throw RuntimeException to be handled in all clients.
     }
 
     /**
@@ -88,32 +88,36 @@ public abstract class ClientFrontend {
      */
     public GeneratedMessageV3 exchangeMessages(GeneratedMessageV3 message,  Method stubCreator, Method stubMethod,
                                                Function<GeneratedMessageV3, Boolean> continueCondition, boolean isWrite) {
+
         GeneratedMessageV3 response = null;
 
         for (int i = 0; i < (isWrite ? writeServers.size() : allServers.size()); i++) {
 
-            /* choose a server according to type of operation */
+            // Choose a server according to type of operation
             ServerAddress sa = isWrite ? writeServers.peek() : allServers.peek();
 
+            // Put at end of queue
             allServers.remove(sa);
             allServers.addLast(sa);
 
-            /* if by chance a Primary server was chosen even if a Read was requested, adjust the Write queue as well */
+            // If by chance a primary server was chosen even if a read operation was requested, adjust the writing servers queue as well
             if (writeServers.contains(sa)) {
                 writeServers.remove(sa);
                 writeServers.addLast(sa);
             }
 
-            DebugMessage.debug("Trying server @" + sa.getHost() + " : " + sa.getPort(),
+            DebugMessage.debug("Trying server @ " + sa.getHost() + ":" + sa.getPort() + "...",
                     "exchangeMessages", DEBUG_FLAG);
 
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+            ManagedChannel channel = null;
 
             try {
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
                 AbstractBlockingStub stub = (AbstractBlockingStub) stubCreator.invoke(null, channel);
 
-                response = (GeneratedMessageV3) stubMethod.invoke(stub, message);
+                response = (GeneratedMessageV3) stubMethod.invoke(stub.withDeadlineAfter(deadlineSecs, TimeUnit.SECONDS), message);
 
+                // If we have a valid response or if we've iterated through every available server for the requested operation return message
                 if (!continueCondition.apply(response) || i == (isWrite ? writeServers.size() : allServers.size()) - 1) {
                     channel.shutdown();
                     return response;
@@ -122,12 +126,12 @@ public abstract class ClientFrontend {
             } catch (InvocationTargetException ite) {
                 StatusRuntimeException e = (StatusRuntimeException) ite.getTargetException();
                 if (!(e.getStatus().getCode() == Status.Code.UNAVAILABLE && i < (isWrite ? writeServers.size() : allServers.size()) - 1)) {
-                    channel.shutdown();
+                    if (channel != null) { channel.shutdown(); }
                     throw e;
                 }
 
             } catch (IllegalAccessException | IllegalArgumentException iae) {
-                channel.shutdown();
+                if (channel != null) { channel.shutdown(); }
                 throw new RuntimeException(iae.getMessage());
             }
         }

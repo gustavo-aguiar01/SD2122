@@ -14,6 +14,7 @@ import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceIm
 
 
 public class AdminServiceImpl extends AdminServiceImplBase {
+
     ClassServer.ClassServerState serverState;
 
     public AdminServiceImpl(ClassServer.ClassServerState serverState) {
@@ -62,6 +63,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             ClassStateReport studentClass = serverState.getStudentClass(true).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -73,7 +75,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
             response = DumpResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = DumpResponse.newBuilder()
@@ -82,5 +83,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 }

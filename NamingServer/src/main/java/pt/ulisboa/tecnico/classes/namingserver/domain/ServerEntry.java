@@ -6,7 +6,7 @@ public class ServerEntry {
 
     private final String host;
     private final int port;
-    private Map<String, String> qualifiers;
+    private final Map<String, String> qualifiers;
 
     public ServerEntry(String host, int port, Map<String, String> qualifiers) {
         this.host = host;

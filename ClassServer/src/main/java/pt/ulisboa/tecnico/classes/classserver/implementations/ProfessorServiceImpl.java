@@ -30,7 +30,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
     public void openEnrollments(OpenEnrollmentsRequest request, StreamObserver<OpenEnrollmentsResponse> responseObserver) {
 
         if (request.getCapacity() < 0) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer!").asRuntimeException());
+            responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer.").asRuntimeException());
             return;
         }
 
@@ -38,27 +38,24 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.openEnrollments(request.getCapacity());
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
         } catch (EnrollmentsAlreadyOpenException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_OPENED;
-
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
-
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = OpenEnrollmentsResponse.newBuilder()
-                .setCode(code).build();
-
+        response = OpenEnrollmentsResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 
     /**
@@ -73,24 +70,22 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.closeEnrollments();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
         } catch (EnrollmentsAlreadyClosedException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
-
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = CloseEnrollmentsResponse.newBuilder()
-                .setCode(code).build();
-
+        response = CloseEnrollmentsResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 
     /**
@@ -105,6 +100,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -116,7 +112,6 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             response = ListClassResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
 
-
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = ListClassResponse.newBuilder()
@@ -125,6 +120,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 
     /**
@@ -144,6 +140,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
+
             Class studentClass = serverState.getStudentClassToWrite(false);
             studentClass.revokeEnrollment(request.getStudentId());
 

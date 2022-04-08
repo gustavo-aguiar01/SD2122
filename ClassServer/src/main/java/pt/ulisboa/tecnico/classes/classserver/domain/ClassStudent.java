@@ -6,8 +6,10 @@ public class ClassStudent {
     private String name;
 
     public ClassStudent(String id, String name) {
+
         this.id = id;
         this.name = name;
+
     }
 
     /**
@@ -46,9 +48,7 @@ public class ClassStudent {
      * Name setter
      * @param name
      */
-    public void setName(String name) {
-        this.name = name;
-    }
+    public void setName(String name) { this.name = name; }
 
     /**
      * Check if the given id is a valid student ID

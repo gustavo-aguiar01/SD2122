@@ -19,17 +19,20 @@ import pt.ulisboa.tecnico.classes.classserver.implementations.*;
 
 public class ClassServer {
 
-  /* Naming Server info */
+  // Class service name
+  private static final String CLASS_SERVICE_NAME = "Turmas";
+
+  // Naming Server info
   private static final String NAMING_HOSTNAME = "localhost";
   private static final int NAMING_PORT_NUMBER = 5000;
 
-  /* Server host port. */
+  // Server host port
   private static int port;
   private static String host;
   private static ClassServerState serverState;
   private static String primary;
 
-  /* Server state class */
+  // Server state class
   public static class ClassServerState {
 
     public enum ACCESS_TYPE {
@@ -57,23 +60,23 @@ public class ClassServer {
      */
     public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
 
-      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : " non ") + "admin user", "getStudentClass", DEBUG_FLAG);
-      DebugMessage.debug("The server is" + (isActive() ? " " : " not ") + "active", null, DEBUG_FLAG);
+      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : " non ") + "admin user.", "getStudentClass", DEBUG_FLAG);
+      DebugMessage.debug("The server is" + (isActive() ? " " : " not ") + "active.", null, DEBUG_FLAG);
 
       /* Can only access server contents if the server is active */
       if (!isAdmin && !this.isActive()) {
-        DebugMessage.debug("It's not possible to obtain student class", null, DEBUG_FLAG);
+        DebugMessage.debug("It's not possible to obtain student class.", null, DEBUG_FLAG);
         throw new InactiveServerException();
       }
 
-      DebugMessage.debug("Student class returned successfully", null, DEBUG_FLAG);
+      DebugMessage.debug("Student class returned successfully.", null, DEBUG_FLAG);
       return studentClass;
     }
 
     public Class getStudentClassToWrite(boolean isAdmin) throws InactiveServerException,
             InvalidOperationException{
       if (!primary) {
-        DebugMessage.debug("Cannot execute write operation on backup server", null, DEBUG_FLAG);
+        DebugMessage.debug("Cannot execute write operation on backup server.", null, DEBUG_FLAG);
         throw new InvalidOperationException();
       }
       return this.getStudentClass(isAdmin);
@@ -86,7 +89,7 @@ public class ClassServer {
      */
     public synchronized void setActive(boolean active) {
 
-      DebugMessage.debug("Server is now " + (active ? "active" : "inactive"), "setActive", DEBUG_FLAG);
+      DebugMessage.debug("Server is now " + (active ? "active" : "inactive."), "setActive", DEBUG_FLAG);
       this.active = active;
 
     }
@@ -111,10 +114,10 @@ public class ClassServer {
   public static void main(String[] args) throws IOException, InterruptedException {
 
     System.out.println(ClassServer.class.getSimpleName());
-    System.out.printf("Received %d Argument(s)%n", args.length);
+    System.out.printf("Received %d Argument(s).%n", args.length);
 
     if (args.length < 3 || args.length > 4) {
-      ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
+      ErrorMessage.fatalError("Invalid arguments expected : <hostname> <port> <P/S> [-debug].");
     }
 
     host = args[0];
@@ -122,15 +125,15 @@ public class ClassServer {
     try {
       port = Integer.parseInt(args[1]);
     } catch (NumberFormatException e) {
-      ErrorMessage.fatalError("Invalid port number");
+      ErrorMessage.fatalError("Invalid port number.");
     }
 
     if (!(1024 <= port && port <= 65535)) {
-      ErrorMessage.fatalError("Invalid port number");
+      ErrorMessage.fatalError("Invalid port number.");
     }
 
     if (! (args[2].equals("P") || args[2].equals("S"))) {
-      ErrorMessage.fatalError("Invalid command expected : <hostname> <port> <P/S>");
+      ErrorMessage.fatalError("Invalid arguments expected : <hostname> <port> <P/S> [-debug].");
     }
 
     primary = args[2];
@@ -139,7 +142,7 @@ public class ClassServer {
       if (args[3].equals("-debug")) {
         System.setProperty("debug", "true");
       } else {
-        ErrorMessage.fatalError("Invalid argument passed, try -debug");
+        ErrorMessage.fatalError("Invalid argument passed, try -debug.");
       }
     }
 
@@ -161,18 +164,23 @@ public class ClassServer {
     final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     try {
-      classFrontend.register("Turmas", host, port, primary);
+
+      classFrontend.register(CLASS_SERVICE_NAME, host, port, primary);
+
     } catch (RuntimeException e) {
       ErrorMessage.fatalError(e.getMessage());
-      System.exit(1);
     }
 
-    // Class that allows the primary server to repeatedly propagate its state
+    // Class that allows a primary server to repeatedly propagate its state
     class PropagateState extends TimerTask {
       @Override
       public void run() {
         try {
-          DebugMessage.debug(classFrontend.propagateState(serverState.getStudentClass(false).reportClassState()), "propagateState", ClassServerState.DEBUG_FLAG);
+
+          DebugMessage.debug(classFrontend
+                  .propagateState(CLASS_SERVICE_NAME, serverState.getStudentClass(false).reportClassState())
+                  , "propagateState", ClassServerState.DEBUG_FLAG);
+
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
         } catch (RuntimeException e) {
@@ -181,7 +189,7 @@ public class ClassServer {
       }
     }
 
-    // Every second the primary server propagates its state to the secondary server
+    // Every 10 seconds a primary server propagates its state to all secondary servers
     Timer timer;
     TimerTask task = new PropagateState();
     if (serverState.primary) {
@@ -192,11 +200,13 @@ public class ClassServer {
     // Make sure to delete the server from naming server upon termination
     class DeleteFromNamingServer extends Thread {
       public void run() {
-        task.cancel();
+        if (serverState.primary) { task.cancel(); }
         try {
-          classFrontend.delete("Turmas", host, port);
+
+          classFrontend.delete(CLASS_SERVICE_NAME, host, port);
           classFrontend.shutdown();
           server.shutdownNow();
+
         } catch (RuntimeException e) {
           classFrontend.shutdown();
           ErrorMessage.error(e.getMessage());

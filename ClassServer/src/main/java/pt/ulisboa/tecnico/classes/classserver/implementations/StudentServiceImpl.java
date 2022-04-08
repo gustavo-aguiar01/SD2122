@@ -32,21 +32,21 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         if (!ClassStudent.isValidStudentId(request.getStudent().getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT
-                    .withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer)")
+                    .withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).")
                     .asRuntimeException());
-            return ;
+            return;
         } else if (!ClassStudent.isValidStudentName((request.getStudent().getStudentName()))){
             responseObserver.onError(INVALID_ARGUMENT
-                    .withDescription("Invalid student name input! Student name should have from 3 to 30 characters " +
-                            "including spaces")
+                    .withDescription("Invalid student name input! Student name should have from 3 to 30 characters including spaces.")
                     .asRuntimeException());
-            return ;
+            return;
         }
 
         EnrollResponse response;
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             Class studentClass = serverState.getStudentClassToWrite(false);
 
             String id = request.getStudent().getStudentId();
@@ -57,24 +57,17 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-
         } catch (EnrollmentsAlreadyClosedException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
-
         } catch (StudentAlreadyEnrolledException e) {
             code = ResponseCode.STUDENT_ALREADY_ENROLLED;
-
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
-
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
-
         }
 
-        response = EnrollResponse.newBuilder()
-                .setCode(code).build();
-
+        response = EnrollResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -92,6 +85,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         ResponseCode code = ResponseCode.OK;
 
         try {
+
             ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())

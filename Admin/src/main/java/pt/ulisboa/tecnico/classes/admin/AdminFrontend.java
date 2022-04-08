@@ -7,23 +7,21 @@ import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc;
-import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
+import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.*;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.concurrent.TimeUnit;
 
 public class AdminFrontend extends ClientFrontend {
 
-    /* Set flag to true to print debug messages. */
+    // Set flag to true to print debug messages
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     public AdminFrontend (String hostname, int port, String serviceName) {
         super(hostname, port, serviceName);
     }
 
-    // admin remote methods
+    // Admin GRPC remote methods
 
     /**
      * "activate" client remote call facade
@@ -32,15 +30,15 @@ public class AdminFrontend extends ClientFrontend {
      */
     public String activate(String primary) throws RuntimeException {
 
-        DebugMessage.debug("Calling remote call ativate", "activate", DEBUG_FLAG);
+        DebugMessage.debug("Calling remote call activate.", "activate", DEBUG_FLAG);
 
         if (!(primary.equals("P") || primary.equals("S"))) {
-            DebugMessage.debug("Invalid argument passed, " + primary,
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
                     null, DEBUG_FLAG);
-            throw new RuntimeException("Invalid argument passed, " + primary);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
         }
 
-        // refresh server list
+        // Refresh servers list
         try {
             super.refreshServers();
         } catch (StatusRuntimeException e) {
@@ -49,44 +47,47 @@ public class AdminFrontend extends ClientFrontend {
 
         StringBuilder builder = new StringBuilder();
 
-        // refresh server list
+        // Command usage: activate P/S
         for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
 
+            ManagedChannel channel = null;
             ActivateRequest request = ActivateRequest.getDefaultInstance();
             ActivateResponse response;
-
-            // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
-                    null, DEBUG_FLAG);
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
             try {
-                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
-                response = stub.activate(request);
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).activate(request);
                 channel.shutdown();
 
-
-                Stringify.format(response.getCode());
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
-                DebugMessage.debug("Got the following response " + message,
+                DebugMessage.debug("Got the following response: " + message,
                         null, DEBUG_FLAG);
-                builder.append(message + "\n");
+                builder.append(message).append("\n");
 
             } catch (StatusRuntimeException e){
-                channel.shutdown();
+
+                if (channel != null) { channel.shutdown(); }
 
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                }
+                else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
                 } else {
                     // Other than that it should throw exception
                     throw new RuntimeException(e.getStatus().getDescription());
                 }
             }
         }
-
         return builder.toString();
     }
 
@@ -97,15 +98,15 @@ public class AdminFrontend extends ClientFrontend {
      */
     public String deactivate(String primary) throws RuntimeException {
 
-        DebugMessage.debug("Calling remote call deactivate", "deactivate", DEBUG_FLAG);
+        DebugMessage.debug("Calling remote call deactivate.", "deactivate", DEBUG_FLAG);
 
         if (!(primary.equals("P") || primary.equals("S"))) {
-            DebugMessage.debug("Invalid argument passed, " + primary,
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
                     null, DEBUG_FLAG);
-            throw new RuntimeException("Invalid argument passed, " + primary);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
         }
 
-        // refresh server list
+        // Refresh server list
         try {
             super.refreshServers();
         } catch (StatusRuntimeException e) {
@@ -114,46 +115,46 @@ public class AdminFrontend extends ClientFrontend {
 
         StringBuilder builder = new StringBuilder();
 
-        // refresh server list
         for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+
+            ManagedChannel channel = null;
             DeactivateRequest request = DeactivateRequest.getDefaultInstance();
             DeactivateResponse response;
-
-            // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
-                    null, DEBUG_FLAG);
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
             String message;
 
             try {
-                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
-                response = stub.deactivate(request);
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).deactivate(request);
                 channel.shutdown();
 
-
-                Stringify.format(response.getCode());
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
-                DebugMessage.debug("Got the following response " + message,
+                DebugMessage.debug("Got the following response: " + message,
                         null, DEBUG_FLAG);
-                builder.append(message + "\n");
+                builder.append(message).append("\n");
 
             } catch (StatusRuntimeException e){
-                channel.shutdown();
+
+                if (channel != null) { channel.shutdown(); }
 
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
                 } else {
                     // Other than that it should throw exception
                     throw new RuntimeException(e.getStatus().getDescription());
                 }
             }
         }
-
-
         return builder.toString();
-
     }
 
     /**
@@ -164,15 +165,15 @@ public class AdminFrontend extends ClientFrontend {
      */
     public String dump(String primary) throws RuntimeException {
 
-        DebugMessage.debug("Calling remote call dump", "dump", DEBUG_FLAG);
+        DebugMessage.debug("Calling remote call dump.", "dump", DEBUG_FLAG);
 
         if (!(primary.equals("P") || primary.equals("S"))) {
-            DebugMessage.debug("Invalid argument passed, " + primary,
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
                 null, DEBUG_FLAG);
-            throw new RuntimeException("Invalid argument passed, " + primary);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
         }
 
-        // refresh server list
+        // Refresh server list
         try {
             super.refreshServers();
         } catch (StatusRuntimeException e) {
@@ -183,46 +184,50 @@ public class AdminFrontend extends ClientFrontend {
 
         for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
 
-            DebugMessage.debug("Dumping from " + (primary.equals("P") ? "primary" : "secondary") + " server @ " + sa.getHost() + ":" + sa.getPort(),
+            DebugMessage.debug("Dumping from " + (primary.equals("P") ? "primary" : "secondary") + " server @ " + sa.getHost() + ":" + sa.getPort() + ".",
                     null, DEBUG_FLAG);
-
             DumpRequest request = DumpRequest.getDefaultInstance();
             DumpResponse response;
-
-            // create communication channel with server address = sa
-            DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort(),
-                    null, DEBUG_FLAG);
-            ManagedChannel channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+            ManagedChannel channel = null;
             String message;
 
             try {
-                // make the remote call to the server with server address = sa
-                AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
-                response = stub.dump(request);
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).dump(request);
                 channel.shutdown();
 
                 ResponseCode code = response.getCode();
                 message = Stringify.format(code);
                 DebugMessage.debug("Got the following response: " + message, null, DEBUG_FLAG);
+
                 if (response.getCode() != ResponseCode.OK) {
-                    builder.append(message + "\n");
+                    builder.append(message).append("\n");
                 } else {
-                    DebugMessage.debug("Class state returned successfully", null, DEBUG_FLAG);
+                    DebugMessage.debug("Class state returned successfully.", null, DEBUG_FLAG);
                     builder.append(Stringify.format(response.getClassState()));
                 }
             } catch (StatusRuntimeException e) {
-                channel.shutdown();
+
+                if (channel != null) { channel.shutdown(); }
 
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available!", null, DEBUG_FLAG);
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
                 } else {
                     // Other than that it should throw exception
                     throw new RuntimeException(e.getStatus().getDescription());
                 }
             }
         }
-    return builder.toString();
+        return builder.toString();
     }
 
     /**

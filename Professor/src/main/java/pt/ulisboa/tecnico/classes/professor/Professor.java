@@ -2,13 +2,13 @@ package pt.ulisboa.tecnico.classes.professor;
 
 import pt.ulisboa.tecnico.classes.ErrorMessage;
 
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Professor {
 
   private static final String HOSTNAME = "localhost";
   private static final int PORT_NUMBER = 5000;
-
   private static final String SERVICE = "Turmas";
 
   private static final String OPEN_ENROLLMENTS_CMD = "openEnrollments";
@@ -34,31 +34,34 @@ public class Professor {
       if (args[0].equals("-debug")) {
         System.setProperty("debug", "true");
       } else {
-        ErrorMessage.fatalError("Invalid argument passed, try -debug");
+        ErrorMessage.fatalError("Invalid argument passed, try -debug.");
       }
     }
 
-    // Frontend connection establishment
-    ProfessorFrontend professorFrontend = null;
+    ProfessorFrontend professorFrontend = null; // Either it's assigned or has fatal error - never null.
     try {
       professorFrontend= new ProfessorFrontend(HOSTNAME, PORT_NUMBER, SERVICE);
-    } catch (RuntimeException e) {
+    } catch (RuntimeException e) { // Case where there are no servers available - abort execution.
       ErrorMessage.fatalError(e.getMessage());
     }
     Scanner scanner = new Scanner(System.in);
 
     while(true) {
       System.out.printf("> ");
-      String[] line = scanner.nextLine().split(" ");
 
-      // Open enrollments - openEnrollments cmd
-      if (OPEN_ENROLLMENTS_CMD.equals(line[0])) {
+      // Split input by spaces to obtain command and args
+      String[] line = scanner.nextLine().split(" ");
+      String command = line[0];
+      String[] arguments = Arrays.copyOfRange(line, 1, line.length);
+
+      // Open class enrollments - openEnrollments cmd
+      if (OPEN_ENROLLMENTS_CMD.equals(command)) {
         if (line.length != 2) {
-          ErrorMessage.error("Invalid " +  OPEN_ENROLLMENTS_CMD + "command usage.");
+          ErrorMessage.error("Invalid " +  OPEN_ENROLLMENTS_CMD + " command usage.");
           continue;
         }
         try {
-          int capacity = Integer.parseInt(line[1]);
+          int capacity = Integer.parseInt(arguments[0]);
           System.out.println(professorFrontend.openEnrollments(capacity));
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
@@ -66,10 +69,10 @@ public class Professor {
         }
       }
 
-      // Close enrollments - closeEnrollments cmd
-      if (CLOSE_ENROLLMENTS_CMD.equals(line[0])) {
+      // Close class enrollments - closeEnrollments cmd
+      else if (CLOSE_ENROLLMENTS_CMD.equals(command)) {
         if (line.length != 1) {
-          ErrorMessage.error("Invalid" + CLOSE_ENROLLMENTS_CMD + "command usage.");
+          ErrorMessage.error("Invalid " + CLOSE_ENROLLMENTS_CMD + " command usage.");
           continue;
         }
         try {
@@ -81,10 +84,10 @@ public class Professor {
 
       }
 
-      // List - list cmd
-      if (LIST_CMD.equals(line[0])) {
+      // List class state - list cmd
+      else if (LIST_CMD.equals(command)) {
         if (line.length != 1) {
-          ErrorMessage.error("Invalid" + LIST_CMD + "command usage.");
+          ErrorMessage.error("Invalid " + LIST_CMD + " command usage.");
           continue;
         }
         try {
@@ -96,24 +99,29 @@ public class Professor {
       }
 
       // Cancel enrollment - cancelEnrollment cmd
-      if (CANCEL_ENROLLMENT_CMD.equals(line[0])) {
+      else if (CANCEL_ENROLLMENT_CMD.equals(command)) {
         if (line.length != 2) {
-          ErrorMessage.error("Invalid" + CANCEL_ENROLLMENT_CMD + "command usage.");
+          ErrorMessage.error("Invalid " + CANCEL_ENROLLMENT_CMD + " command usage.");
           continue;
         }
         try {
-          System.out.println(professorFrontend.cancelEnrollment(line[1]));
+          System.out.println(professorFrontend.cancelEnrollment(arguments[0]));
         } catch (RuntimeException e) {
           ErrorMessage.error(e.getMessage());
           System.exit(1);
         }
       }
 
-      // Local command to terminate - exit cmd
-      if (EXIT_CMD.equals(line[0])) {
+      // Terminate program
+      else if (EXIT_CMD.equals(command)) {
         professorFrontend.shutdown();
         scanner.close();
         System.exit(0);
+      }
+
+      // Invalid command given
+      else {
+        System.out.println("Command not found.");
       }
 
       System.out.printf("%n");

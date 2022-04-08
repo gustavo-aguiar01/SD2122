@@ -1,9 +1,5 @@
 package pt.ulisboa.tecnico.classes.namingserver.implementations;
 
-import io.grpc.Grpc;
-
-import io.grpc.Server;
-
 import io.grpc.stub.StreamObserver;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc.ClassNamingServerServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
@@ -36,24 +32,26 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
         request.getQualifiersList().forEach(q -> qualifiers.put(q.getName(), q.getValue()));
 
         try {
+
             services.addService(request.getServiceName(), request.getHost(), request.getPort(), qualifiers);
 
             responseObserver.onNext(RegisterResponse.getDefaultInstance());
             responseObserver.onCompleted();
+
         } catch (InvalidServerInfoException e) {
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("Invalid server info: server port should be a legal port and/or \"primaryStatus\" " +
-                            "should be a qualifier with value \"P\" or \"S\"")
+                            "should be a qualifier with value \"P\" or \"S\".")
                     .asRuntimeException());
         } catch (AlreadyExistingServerException e) {
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("A server associated with the service " + request.getServiceName()
-                            + " with the given host:port already exists")
+                            + " with the given host:port already exists.")
                     .asRuntimeException());
         } catch (AlreadyExistingPrimaryServerException e) {
             responseObserver.onError(INVALID_ARGUMENT
                     .withDescription("A primary server associated with the service " + request.getServiceName()
-                            + " already exists")
+                            + " already exists.")
                     .asRuntimeException());
         }
 
@@ -73,13 +71,15 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
         HashMap<String, String> qualifiers = new HashMap<>();
         request.getQualifiersList().forEach(q -> qualifiers.put(q.getName(), q.getValue()));
 
-        List<ServerAddress> servers = services.lookupServersOfService(serviceName, qualifiers).stream()
+        List<ServerAddress> servers;
+        servers = services.lookupServersOfService(serviceName, qualifiers).stream()
                 .map(s -> ServerAddress.newBuilder().setHost(s.getHost()).setPort(s.getPort()).build())
                 .collect(Collectors.toList());
 
         LookupResponse response = LookupResponse.newBuilder().addAllServers(servers).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 
     /**
@@ -92,9 +92,11 @@ public class ClassServerServiceImpl extends ClassNamingServerServiceImplBase {
     @Override
     public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
 
+        // We allow a request to have a service name that doesn't exist - nothing is done
         services.deleteService(request.getServiceName(), request.getHost(), request.getPort());
 
         responseObserver.onNext(DeleteResponse.getDefaultInstance());
         responseObserver.onCompleted();
+
     }
 }

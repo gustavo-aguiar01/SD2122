@@ -1,20 +1,14 @@
 package pt.ulisboa.tecnico.classes.namingserver.domain;
 
-import pt.ulisboa.tecnico.classes.DebugMessage;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ServiceEntry {
 
-    /* Set flag to true to print debug messages. */
-    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-
-    Set<ServerEntry> serverEntries;
-    String serviceName;
+    private Set<ServerEntry> serverEntries;
+    private String serviceName;
 
     public ServiceEntry(String serviceName) {
-        this.serverEntries = new HashSet<ServerEntry>();
+        this.serverEntries = new HashSet<>();
         this.serviceName = serviceName;
     }
 

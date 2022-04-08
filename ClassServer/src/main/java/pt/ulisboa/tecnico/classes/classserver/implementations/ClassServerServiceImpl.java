@@ -19,20 +19,26 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseObserver) {
+
         ResponseCode code;
         PropagateStateResponse response;
         ClassState state = request.getClassState();
+
         try {
+
             serverState.getStudentClass(false)
                     .setClassState(state.getCapacity(), state.getOpenEnrollments(),
                             ClassUtilities.studentsToDomain(state.getEnrolledList()),
                             ClassUtilities.studentsToDomain(state.getDiscardedList()));
             code = ResponseCode.OK;
+
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         }
+
         response = PropagateStateResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
     }
 }
