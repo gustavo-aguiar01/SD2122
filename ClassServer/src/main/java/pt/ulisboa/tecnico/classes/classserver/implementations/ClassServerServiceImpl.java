@@ -29,7 +29,8 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
             serverState.getStudentClass(false)
                     .setClassState(state.getCapacity(), state.getOpenEnrollments(),
                             ClassUtilities.studentsToDomain(state.getEnrolledList()),
-                            ClassUtilities.studentsToDomain(state.getDiscardedList()));
+                            ClassUtilities.studentsToDomain(state.getDiscardedList()),
+                            request.getVersionNumber());
             code = ResponseCode.OK;
 
         } catch (InactiveServerException e) {

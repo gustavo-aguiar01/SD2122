@@ -98,7 +98,8 @@ public class ClassFrontend {
                     .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudents()))
                     .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
-            PropagateStateRequest request = PropagateStateRequest.newBuilder().setClassState(state).build();
+            PropagateStateRequest request = PropagateStateRequest.newBuilder().setClassState(state).
+                    setVersionNumber(studentClass.getVersionNumber()).build();
             PropagateStateResponse response;
 
             try {

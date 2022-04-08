@@ -44,16 +44,18 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         EnrollResponse response;
         ResponseCode code = ResponseCode.OK;
+        int versionNumber = -1;
 
         try {
-
             Class studentClass = serverState.getStudentClassToWrite(false);
+            versionNumber = serverState.getStudentClass(false).getVersionNumber();
 
             String id = request.getStudent().getStudentId();
             String name = request.getStudent().getStudentName();
             ClassStudent student = new ClassStudent(id, name);
 
             studentClass.enroll(student);
+            versionNumber = studentClass.getVersionNumber();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -67,7 +69,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = EnrollResponse.newBuilder().setCode(code).build();
+        response = EnrollResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -86,6 +88,12 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         try {
 
+            if (request.getVersionNumber() > serverState.getStudentClass(false).getVersionNumber()) {
+                responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.UNDER_MAINTENANCE).build());
+                responseObserver.onCompleted();
+                return ;
+            }
+
             ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -95,7 +103,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
                     .build();
 
             response = StudentClassServer.ListClassResponse.newBuilder().setCode(code)
-                    .setClassState(state).build();
+                    .setClassState(state).setVersionNumber(studentClass.getVersionNumber()).build();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;

@@ -13,6 +13,7 @@ public class ProfessorFrontend extends ClientFrontend {
 
     // Set flag to true to print debug messages.
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+    int versionNumber = 0;
 
     public ProfessorFrontend(String hostname, int port, String serviceName) {
         super(hostname, port, serviceName);
@@ -35,7 +36,13 @@ public class ProfessorFrontend extends ClientFrontend {
             response = (OpenEnrollmentsResponse) exchangeMessages(request,
                     ProfessorServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     ProfessorServiceGrpc.ProfessorServiceBlockingStub.class.getMethod("openEnrollments", OpenEnrollmentsRequest.class),
-                    x -> (((OpenEnrollmentsResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
+                    x -> ((OpenEnrollmentsResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
+
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) { // Invalid input capacity.
@@ -73,6 +80,12 @@ public class ProfessorFrontend extends ClientFrontend {
                     ProfessorServiceGrpc.ProfessorServiceBlockingStub.class.getMethod("closeEnrollments", CloseEnrollmentsRequest.class),
                     x -> (((CloseEnrollmentsResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
 
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
+
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught: " + e.getStatus().getDescription(), null, DEBUG_FLAG);
             throw new RuntimeException(e.getStatus().getDescription());
@@ -91,7 +104,7 @@ public class ProfessorFrontend extends ClientFrontend {
     public String listClass() {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.getDefaultInstance();
+        ListClassRequest request = ListClassRequest.newBuilder().setVersionNumber(versionNumber).build();
         ListClassResponse response;
 
         try {
@@ -99,7 +112,14 @@ public class ProfessorFrontend extends ClientFrontend {
             response = (ListClassResponse) exchangeMessages(request,
                     ProfessorServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     ProfessorServiceGrpc.ProfessorServiceBlockingStub.class.getMethod("listClass", ListClassRequest.class),
-                    x -> (((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), false);
+                    x -> ((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER) ||
+                            ((ListClassResponse)x).getCode().equals(ResponseCode.UNDER_MAINTENANCE), false);
+
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);
@@ -138,6 +158,12 @@ public class ProfessorFrontend extends ClientFrontend {
                     ProfessorServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     ProfessorServiceGrpc.ProfessorServiceBlockingStub.class.getMethod("cancelEnrollment", CancelEnrollmentRequest.class),
                     x -> (((CancelEnrollmentResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
+
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught: " + e.getStatus().getDescription(), null, DEBUG_FLAG);
