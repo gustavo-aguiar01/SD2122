@@ -48,14 +48,12 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         try {
             Class studentClass = serverState.getStudentClassToWrite(false);
-            versionNumber = serverState.getStudentClass(false).getVersionNumber();
 
             String id = request.getStudent().getStudentId();
             String name = request.getStudent().getStudentName();
             ClassStudent student = new ClassStudent(id, name);
 
-            studentClass.enroll(student);
-            versionNumber = studentClass.getVersionNumber();
+            versionNumber = studentClass.enroll(student);
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;

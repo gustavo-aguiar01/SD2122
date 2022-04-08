@@ -41,8 +41,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         try {
 
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.openEnrollments(request.getCapacity());
-            versionNumber = studentClass.getVersionNumber();
+            versionNumber = studentClass.openEnrollments(request.getCapacity());
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -73,11 +72,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         int versionNumber = -1;
 
         try {
-
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.closeEnrollments();
-            versionNumber = studentClass.getVersionNumber();
-
+            versionNumber = studentClass.closeEnrollments();
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
@@ -151,10 +147,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.revokeEnrollment(request.getStudentId());
-            versionNumber = studentClass.getVersionNumber();
+            versionNumber = studentClass.revokeEnrollment(request.getStudentId());
 
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;

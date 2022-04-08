@@ -140,7 +140,7 @@ public class Class {
      * @throws StudentAlreadyEnrolledException
      * @throws FullClassException
      */
-    public synchronized void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
+    public int enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
         stateConsistencyLock.writeLock().lock();
         boolean openRegistrations = this.areRegistrationsOpen();
@@ -170,10 +170,13 @@ public class Class {
         revokedStudents.keySet().removeIf(s -> s.equals(student.getId()));
         enrolledStudents.put(student.getId(), student);
         versionNumber ++;
+        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Enrolled student with id: " + student.getId()
                 + " and name: " + student.getName() + ".", null, DEBUG_FLAG);
+
+        return versionNumber;
 
     }
 
@@ -184,7 +187,7 @@ public class Class {
      * @throws EnrollmentsAlreadyOpenException
      * @throws FullClassException
      */
-    public void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
+    public int openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
 
         stateConsistencyLock.writeLock().lock();
         boolean openRegistrations = this.areRegistrationsOpen();
@@ -206,11 +209,14 @@ public class Class {
 
         setCapacity(capacity);
         versionNumber ++;
+        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         setRegistrationsOpen(true);
         DebugMessage.debug("Opened class enrollment registrations with capacity of " +
                 capacity + ".", null, DEBUG_FLAG);
+
+        return versionNumber;
 
     }
 
@@ -218,7 +224,7 @@ public class Class {
      * Close class for student enrollments
      * @throws EnrollmentsAlreadyClosedException
      */
-    public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
+    public int closeEnrollments() throws EnrollmentsAlreadyClosedException {
 
         stateConsistencyLock.writeLock().lock();
 
@@ -232,10 +238,12 @@ public class Class {
 
         setRegistrationsOpen(false);
         versionNumber ++;
+        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Closed class enrollment registrations.", null, DEBUG_FLAG);
 
+        return result;
     }
 
     /**
@@ -243,7 +251,7 @@ public class Class {
      * @param id
      * @throws NonExistingStudentException
      */
-    public synchronized void revokeEnrollment(String id) throws NonExistingStudentException {
+    public int revokeEnrollment(String id) throws NonExistingStudentException {
 
         stateConsistencyLock.writeLock().lock();
 
@@ -258,11 +266,13 @@ public class Class {
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
         versionNumber ++;
+        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Revoked student " + id +
                 "'s registration from class.", null, DEBUG_FLAG);
 
+        return result;
     }
 
     /**
