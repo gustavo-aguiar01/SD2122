@@ -12,14 +12,17 @@ public class ClassStateReport {
     private final boolean areRegistrationsOpen;
     private final Collection<ClassStudent> enrolledStudents = new ArrayList<>();
     private final Collection<ClassStudent> revokedStudents = new ArrayList<>();
+    private final int versionNumber;
 
     public ClassStateReport(int capacity, boolean areRegistrationsOpen,
-                            Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents) {
+                            Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents,
+                            int versionNumber ) {
 
         this.capacity = capacity;
         this.areRegistrationsOpen = areRegistrationsOpen;
         this.enrolledStudents.addAll(enrolledStudents.stream().map(ClassStudent::copyClassStudent).toList());
         this.revokedStudents.addAll(revokedStudents.stream().map(ClassStudent::copyClassStudent).toList());
+        this.versionNumber = versionNumber;
 
     }
 
@@ -38,4 +41,6 @@ public class ClassStateReport {
     public Collection<ClassStudent> getRevokedStudents() {
         return revokedStudents;
     }
+
+    public int getVersionNumber() { return versionNumber; }
 }

@@ -7,6 +7,7 @@ import "ClassesDefinitions.proto";
 
 message PropagateStateRequest {
   ClassState classState = 1;
+  int32 versionNumber = 2;
 }
 
 message PropagateStateResponse {

@@ -38,7 +38,6 @@ public class Admin {
 
     AdminFrontend adminFrontend = null; // Either it's assigned or has fatal error - never null.
     try {
-      System.out.println("1");
       adminFrontend = new AdminFrontend(HOSTNAME, PORT_NUMBER, SERVICE_NAME);
     } catch (RuntimeException e) { // Case where there are no servers available - abort execution.
       ErrorMessage.fatalError(e.getMessage());

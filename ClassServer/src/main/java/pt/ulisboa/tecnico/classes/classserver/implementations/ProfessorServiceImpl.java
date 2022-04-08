@@ -36,11 +36,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         OpenEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
+        int versionNumber = -1;
 
         try {
 
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.openEnrollments(request.getCapacity());
+            versionNumber = studentClass.openEnrollments(request.getCapacity());
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -52,7 +53,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = OpenEnrollmentsResponse.newBuilder().setCode(code).build();
+        response = OpenEnrollmentsResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -68,12 +69,11 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CloseEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
+        int versionNumber = -1;
 
         try {
-
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.closeEnrollments();
-
+            versionNumber = studentClass.closeEnrollments();
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
@@ -82,7 +82,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = CloseEnrollmentsResponse.newBuilder().setCode(code).build();
+        response = CloseEnrollmentsResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -101,6 +101,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         try {
 
+            if (request.getVersionNumber() > serverState.getStudentClass(false).getVersionNumber()) {
+                responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.UNDER_MAINTENANCE).build());
+                responseObserver.onCompleted();
+                return ;
+            }
+
             ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -110,7 +116,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
                     .build();
 
             response = ListClassResponse.newBuilder().setCode(code)
-                    .setClassState(state).build();
+                    .setClassState(state).setVersionNumber(studentClass.getVersionNumber()).build();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -133,6 +139,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CancelEnrollmentResponse response;
         ResponseCode code = ResponseCode.OK;
+        int versionNumber = -1;
 
         if (!ClassStudent.isValidStudentId(request.getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
@@ -140,9 +147,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-
             Class studentClass = serverState.getStudentClassToWrite(false);
-            studentClass.revokeEnrollment(request.getStudentId());
+            versionNumber = studentClass.revokeEnrollment(request.getStudentId());
 
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;
@@ -153,7 +159,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         response = CancelEnrollmentResponse.newBuilder()
-                .setCode(code).build();
+                .setCode(code).setVersionNumber(versionNumber).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

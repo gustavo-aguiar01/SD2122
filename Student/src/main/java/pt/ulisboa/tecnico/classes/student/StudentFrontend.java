@@ -14,6 +14,7 @@ public class StudentFrontend extends ClientFrontend {
 
     // Set flag to true to print debug messages
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+    private int versionNumber = 0;
 
     public StudentFrontend(String hostname, int port, String serviceName) {
         super(hostname, port, serviceName);
@@ -38,7 +39,13 @@ public class StudentFrontend extends ClientFrontend {
             response = (EnrollResponse) exchangeMessages(request,
                     StudentServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     StudentServiceGrpc.StudentServiceBlockingStub.class.getMethod("enroll", EnrollRequest.class),
-                    x -> (((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
+                    x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
+
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
@@ -67,7 +74,7 @@ public class StudentFrontend extends ClientFrontend {
     public String listClass() throws RuntimeException {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.getDefaultInstance();
+        ListClassRequest request = ListClassRequest.newBuilder().setVersionNumber(versionNumber).build();
         ListClassResponse response;
 
         try {
@@ -75,7 +82,13 @@ public class StudentFrontend extends ClientFrontend {
             response = (ListClassResponse) exchangeMessages(request,
                     StudentServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     StudentServiceGrpc.StudentServiceBlockingStub.class.getMethod("listClass", ListClassRequest.class),
-                    x -> (((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), false);
+                    x -> ((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER) ||
+                            ((ListClassResponse)x).getCode().equals(ResponseCode.UNDER_MAINTENANCE), false);
+
+            if (response.getCode() == ResponseCode.OK) {
+                versionNumber = response.getVersionNumber();
+            }
+            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);
