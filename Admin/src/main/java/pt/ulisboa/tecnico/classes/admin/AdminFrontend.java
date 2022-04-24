@@ -230,6 +230,189 @@ public class AdminFrontend extends ClientFrontend {
         return builder.toString();
     }
 
+    public String activateGossip(String primary) {
+        DebugMessage.debug("Calling remote call activateGossip.", "activateGossip", DEBUG_FLAG);
+
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
+        }
+
+        // Refresh server list
+        try {
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
+
+            ManagedChannel channel = null;
+            ActivateGossipRequest request = ActivateGossipRequest.getDefaultInstance();
+            ActivateGossipResponse response;
+            String message;
+
+            try {
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).activateGossip(request);
+                channel.shutdown();
+
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response: " + message,
+                        null, DEBUG_FLAG);
+                builder.append(message).append("\n");
+
+            } catch (StatusRuntimeException e){
+
+                if (channel != null) { channel.shutdown(); }
+
+                // TODO : check if this exeptions apply to activateGossip
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+        return builder.toString();
+    }
+
+    public String deactivateGossip(String primary) {
+        DebugMessage.debug("Calling remote call deactivateGossip.", "deactivateGossip", DEBUG_FLAG);
+
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
+        }
+
+        // Refresh server list
+        try {
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
+
+            ManagedChannel channel = null;
+            DeactivateGossipRequest request = DeactivateGossipRequest.getDefaultInstance();
+            DeactivateGossipResponse response;
+            String message;
+
+            try {
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).deactivateGossip(request);
+                channel.shutdown();
+
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response: " + message,
+                        null, DEBUG_FLAG);
+                builder.append(message).append("\n");
+
+            } catch (StatusRuntimeException e){
+
+                if (channel != null) { channel.shutdown(); }
+
+                // TODO : check if this exeptions apply to deactivateGossip
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+        return builder.toString();
+    }
+
+    public String gossip(String primary) {
+        DebugMessage.debug("Calling remote call gossip.", "gossip", DEBUG_FLAG);
+
+        if (!(primary.equals("P") || primary.equals("S"))) {
+            DebugMessage.debug("Invalid argument passed: " + primary + ".",
+                    null, DEBUG_FLAG);
+            throw new RuntimeException("Invalid argument passed: " + primary + ".");
+        }
+
+        // Refresh server list
+        try {
+            super.refreshServers();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException(e.getStatus().getDescription());
+        }
+
+        StringBuilder builder = new StringBuilder();
+
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
+
+            ManagedChannel channel = null;
+            GossipRequest request = GossipRequest.getDefaultInstance();
+            GossipResponse response;
+            String message;
+
+            try {
+
+                // Create communication channel with server address @ sa
+                DebugMessage.debug("Creating communication channel with " + sa.getHost() + ":" + sa.getPort() + "...",
+                        null, DEBUG_FLAG);
+                channel = ManagedChannelBuilder.forAddress(sa.getHost(), sa.getPort()).usePlaintext().build();
+                AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+                response = stub.withDeadlineAfter(super.deadlineSecs, TimeUnit.SECONDS).gossip(request);
+                channel.shutdown();
+
+                ResponseCode code = response.getCode();
+                message = Stringify.format(code);
+                DebugMessage.debug("Got the following response: " + message,
+                        null, DEBUG_FLAG);
+                builder.append(message).append("\n");
+
+            } catch (StatusRuntimeException e){
+
+                if (channel != null) { channel.shutdown(); }
+
+                // TODO : check if this exeptions apply to gossip
+                if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
+                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
+                } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+                    DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
+                    throw new RuntimeException(e.getStatus().getDescription());
+                } else {
+                    // Other than that it should throw exception
+                    throw new RuntimeException(e.getStatus().getDescription());
+                }
+            }
+        }
+        return builder.toString();
+    }
+
     /**
      * Communication channel shutdown function
      */
