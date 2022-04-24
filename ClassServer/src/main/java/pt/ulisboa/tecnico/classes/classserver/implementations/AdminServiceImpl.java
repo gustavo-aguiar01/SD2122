@@ -82,4 +82,49 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         responseObserver.onCompleted();
 
     }
+
+    /**
+     * "deactivate" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void activateGossip (ActivateGossipRequest request, StreamObserver<ActivateGossipResponse> responseObserver) {
+
+        replicaManager.setActiveGossip(true);
+        ActivateGossipResponse response = ActivateGossipResponse.newBuilder().setCode(ResponseCode.OK).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    /**
+     * "deactivate" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void deactivateGossip (DeactivateGossipRequest request, StreamObserver<DeactivateGossipResponse> responseObserver) {
+
+        replicaManager.setActiveGossip(false);
+        DeactivateGossipResponse response = DeactivateGossipResponse.newBuilder().setCode(ResponseCode.OK).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    /**
+     * "deactivate" remote call server implementation
+     * @param request
+     * @param responseObserver
+     */
+    @Override
+    public void gossip (GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
+
+        System.out.printf("forcing gossip\n");
+        GossipResponse response = GossipResponse.getDefaultInstance();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }

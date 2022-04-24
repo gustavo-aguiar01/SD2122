@@ -13,6 +13,7 @@ public class ReplicaManager {
 
     private static boolean DEBUG_FLAG = (System.getProperty("debug") != null);
     private boolean active;
+    private boolean activeGossip;
     private Class studentClass;
     private boolean primary;
     private String host;
@@ -26,6 +27,7 @@ public class ReplicaManager {
     public ReplicaManager (String primary, String host, int port) {
         this.studentClass = new Class();
         this.active = true;
+        this.activeGossip = true;
         this.primary = primary.equals("P");
         this.studentClass = new Class();
         this.host = host;
@@ -44,6 +46,11 @@ public class ReplicaManager {
 
     }
 
+    public void setActiveGossip(boolean activeGossip) {
+        DebugMessage.debug("Gossip is now " + (activeGossip ? "active." : "inactive."), "setActive", DEBUG_FLAG);
+        this.activeGossip = activeGossip;
+    }
+
     /**
      * Checks if the server is active
      * @return boolean
@@ -51,6 +58,8 @@ public class ReplicaManager {
     public boolean isActive() {
         return active;
     }
+
+    public boolean isActiveGossip() {return activeGossip; }
 
     /**
      * Checks if the server is a primary

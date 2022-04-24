@@ -69,6 +69,11 @@ public class ClassFrontend {
     public String propagateState(String serviceName) throws RuntimeException, InactiveServerException {
         DEBUG_FLAG = false;
         DebugMessage.debug("Calling propagateState remote call.", "propagateState", DEBUG_FLAG);
+        // check if the gossip is active
+        if (!replicaManager.isActiveGossip()) {
+            return "Gossip is not active";
+        }
+
         // Propagate state to secondary servers
         List<Qualifier> qualifiers = new ArrayList<>();
         Qualifier secondary = Qualifier.newBuilder().setName("primaryStatus").setValue("S").build();
@@ -124,6 +129,8 @@ public class ClassFrontend {
                 serverChannel.shutdown();
 
             } catch (StatusRuntimeException e) {
+
+                // TODO : here the gossip can be deactivated
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
                     DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
                     return Stringify.format(ResponseCode.INACTIVE_SERVER); // Edge case where backup server closed after primary checked if servers size != 0
