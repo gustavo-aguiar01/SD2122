@@ -9,13 +9,11 @@ public class LogRecord {
     private String replicaManagerId;
     private Timestamp timestamp;
     private StateUpdate update;
-    private boolean applied;
 
     public LogRecord(String replicaManagerId, Timestamp timestamp, StateUpdate update) {
         this.replicaManagerId = replicaManagerId;
         this.timestamp = timestamp;
         this.update = update;
-        this.applied = false;
     }
 
     public String getReplicaManagerId() {
@@ -30,11 +28,8 @@ public class LogRecord {
         return update;
     }
 
-    public boolean isApplied() {
-        return applied;
-    }
-
-    public void setApplied(boolean applied) {
-        this.applied = applied;
+    public String toString() {
+        return "< ReplicaId: " + replicaManagerId + ", timestamp: " + timestamp.toString()
+                + ", Update: " + update.toString();
     }
 }

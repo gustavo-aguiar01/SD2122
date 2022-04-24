@@ -40,7 +40,7 @@ public class StudentFrontend extends ClientFrontend {
             response = (EnrollResponse) exchangeMessages(request,
                     StudentServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     StudentServiceGrpc.StudentServiceBlockingStub.class.getMethod("enroll", EnrollRequest.class),
-                    x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
+                    x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), false);
 
             if (response.getCode() == ResponseCode.OK) {
                 timestamp.merge(new Timestamp(response.getTimestampMap()));

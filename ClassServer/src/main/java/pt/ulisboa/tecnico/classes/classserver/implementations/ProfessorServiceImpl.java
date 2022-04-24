@@ -7,11 +7,14 @@ import static io.grpc.Status.INVALID_ARGUMENT;
 import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
+import pt.ulisboa.tecnico.classes.classserver.StateUpdate;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
+
+import java.util.List;
 
 public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
@@ -41,14 +44,13 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
                 return;
             }
 
-            timestamp = replicaManager.openEnrollments(request.getCapacity(), false);
+            timestamp = replicaManager.issueUpdate(
+                    new StateUpdate("openEnrollments",
+                            List.of(Integer.toString(request.getCapacity())),
+                            new Timestamp(request.getTimestampMap())), false);
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-        } catch (EnrollmentsAlreadyOpenException e) {
-            code = ResponseCode.ENROLLMENTS_ALREADY_OPENED;
-        } catch (FullClassException e) {
-            code = ResponseCode.FULL_CLASS;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
@@ -72,11 +74,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         Timestamp timestamp = new Timestamp();
 
         try {
-            timestamp = replicaManager.closeEnrollments(false);
+            timestamp = replicaManager.issueUpdate(
+                    new StateUpdate("closeEnrollments", List.of(),
+                            new Timestamp(request.getTimestampMap())), false);
+
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-        } catch (EnrollmentsAlreadyClosedException e) {
-            code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
@@ -146,11 +149,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-            timestamp = replicaManager.revokeEnrollment(request.getStudentId(), false);
+            timestamp = replicaManager.issueUpdate(
+                    new StateUpdate("cancelEnrollment", List.of(request.getStudentId()),
+                            new Timestamp(request.getTimestampMap())), false);
+
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;
-        } catch (NonExistingStudentException e) {
-            code = ResponseCode.NON_EXISTING_STUDENT;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }

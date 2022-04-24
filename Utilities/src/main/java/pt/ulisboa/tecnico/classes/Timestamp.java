@@ -7,14 +7,13 @@ import java.util.stream.Collectors;
 import static java.lang.Math.max;
 
 public class Timestamp {
-    public Map<String, Integer> timestamp;
+    public Map<String, Integer> timestamp = new HashMap<>();
 
     public Timestamp () {
-        this.timestamp = new HashMap<>();
     }
 
     public Timestamp (Map<String, Integer> timestamp) {
-        this.timestamp = timestamp;
+        this.timestamp.putAll(timestamp);
     }
 
     public Map<String, Integer> getMap() { return timestamp; }
@@ -32,22 +31,22 @@ public class Timestamp {
     }
 
     public void merge(Timestamp other) {
-        other.getMap().keySet().stream().forEach(sa ->
+        other.getMap().keySet().forEach(sa ->
         { if (!timestamp.containsKey(sa)) {
-            timestamp.put(sa, 0); } else {
+            timestamp.put(sa, other.get(sa)); } else {
             timestamp.put(sa, max(timestamp.get(sa), other.getMap().get(sa))); }
         });
     }
 
     public boolean biggerThan(Timestamp other) {
         Map<String, Integer> o = other.getMap();
-        return o.keySet().stream().allMatch(sa -> (!timestamp.containsKey(sa) && o.get(sa) > 0) ||
+        return o.keySet().stream().allMatch(sa -> (!timestamp.containsKey(sa) && o.get(sa) == 0) ||
                 (timestamp.containsKey(sa) && timestamp.get(sa) >= o.get(sa)));
     }
 
     @Override
     public String toString() {
-        return timestamp.keySet().stream().map(q ->  q + " : " + timestamp.get(q) + "\n")
-                .collect(Collectors.joining());
+        return "(" + String.join(", ", timestamp.keySet().stream().map(q ->  q + " : " + timestamp.get(q))
+                .collect(Collectors.toList())) + ")";
     }
 }

@@ -89,18 +89,18 @@ public abstract class ClientFrontend {
      * @param stubCreator
      * @param stubMethod
      * @param continueCondition
-     * @param isWrite
+     * @param toPrimary
      * @return GeneratedMessageV3
      */
     public GeneratedMessageV3 exchangeMessages(GeneratedMessageV3 message,  Method stubCreator, Method stubMethod,
-                                               Function<GeneratedMessageV3, Boolean> continueCondition, boolean isWrite) {
+                                               Function<GeneratedMessageV3, Boolean> continueCondition, boolean toPrimary) {
 
         GeneratedMessageV3 response = null;
 
-        for (int i = 0; i < (isWrite ? primaryServers.size() : allServers.size()); i++) {
+        for (int i = 0; i < (toPrimary ? primaryServers.size() : allServers.size()); i++) {
 
             // Choose a server according to type of operation
-            ServerAddress sa = isWrite ? primaryServers.peek() : allServers.peek();
+            ServerAddress sa = toPrimary ? primaryServers.peek() : allServers.peek();
 
             // Put at end of queue
             allServers.remove(sa);
@@ -124,14 +124,14 @@ public abstract class ClientFrontend {
                 response = (GeneratedMessageV3) stubMethod.invoke(stub.withDeadlineAfter(deadlineSecs, TimeUnit.SECONDS), message);
 
                 // If we have a valid response or if we've iterated through every available server for the requested operation return message
-                if (!continueCondition.apply(response) || i == (isWrite ? primaryServers.size() : allServers.size()) - 1) {
+                if (!continueCondition.apply(response) || i == (toPrimary ? primaryServers.size() : allServers.size()) - 1) {
                     channel.shutdown();
                     return response;
                 }
 
             } catch (InvocationTargetException ite) {
                 StatusRuntimeException e = (StatusRuntimeException) ite.getTargetException();
-                if (!(e.getStatus().getCode() == Status.Code.UNAVAILABLE && i < (isWrite ? primaryServers.size() : allServers.size()) - 1)) {
+                if (!(e.getStatus().getCode() == Status.Code.UNAVAILABLE && i < (toPrimary ? primaryServers.size() : allServers.size()) - 1)) {
                     if (channel != null) { channel.shutdown(); }
                     throw e;
                 }
