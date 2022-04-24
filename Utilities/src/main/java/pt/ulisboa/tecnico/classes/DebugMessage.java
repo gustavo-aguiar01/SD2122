@@ -14,8 +14,4 @@ public class DebugMessage {
         }
     }
 
-    public static String timestampToString(Map<String, Integer> timestamp) {
-        return timestamp.keySet().stream().map(q ->  q + " : " + timestamp.get(q) + "\n")
-                .collect(Collectors.joining());
-    }
 }

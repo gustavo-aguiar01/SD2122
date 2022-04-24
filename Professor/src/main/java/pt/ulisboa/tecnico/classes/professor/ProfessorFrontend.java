@@ -5,11 +5,10 @@ import io.grpc.*;
 import pt.ulisboa.tecnico.classes.ClientFrontend;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc;
-
-import java.util.stream.Collectors;
 
 public class ProfessorFrontend extends ClientFrontend {
 
@@ -31,7 +30,7 @@ public class ProfessorFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call openEnrollments.", "openEnrollments", DEBUG_FLAG);
         OpenEnrollmentsRequest request = OpenEnrollmentsRequest.newBuilder().setCapacity(capacity)
-                                                                .putAllTimestamp(timestamp).build();
+                                                                .putAllTimestamp(timestamp.getMap()).build();
         OpenEnrollmentsResponse response;
 
         try {
@@ -42,10 +41,10 @@ public class ProfessorFrontend extends ClientFrontend {
                     x -> ((OpenEnrollmentsResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
 
             if (response.getCode() == ResponseCode.OK) {
-                timestamp = response.getTimestampMap();
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
             DebugMessage.debug("Current timestamp:\n" +
-                   DebugMessage.timestampToString(timestamp), "openEnrollments", DEBUG_FLAG);
+                   timestamp.toString(), "openEnrollments", DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) { // Invalid input capacity.
@@ -73,7 +72,8 @@ public class ProfessorFrontend extends ClientFrontend {
     public String closeEnrollments() {
 
         DebugMessage.debug("Calling remote call closeEnrollments.", "closeEnrollments", DEBUG_FLAG);
-        CloseEnrollmentsRequest request = CloseEnrollmentsRequest.newBuilder().putAllTimestamp(timestamp).build();
+        CloseEnrollmentsRequest request = CloseEnrollmentsRequest.newBuilder()
+                .putAllTimestamp(timestamp.getMap()).build();
         CloseEnrollmentsResponse response;
 
         try {
@@ -84,10 +84,10 @@ public class ProfessorFrontend extends ClientFrontend {
                     x -> (((CloseEnrollmentsResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
 
             if (response.getCode() == ResponseCode.OK) {
-                timestamp = response.getTimestampMap();
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
             DebugMessage.debug("Current timestamp:\n" +
-                    DebugMessage.timestampToString(timestamp), "closeEnrollments", DEBUG_FLAG);
+                    timestamp.toString(), "closeEnrollments", DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught: " + e.getStatus().getDescription(), null, DEBUG_FLAG);
@@ -107,7 +107,7 @@ public class ProfessorFrontend extends ClientFrontend {
     public String listClass() {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(timestamp).build();
+        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(timestamp.getMap()).build();
         ListClassResponse response;
 
         try {
@@ -119,10 +119,10 @@ public class ProfessorFrontend extends ClientFrontend {
                             ((ListClassResponse)x).getCode().equals(ResponseCode.UNDER_MAINTENANCE), false);
 
             if (response.getCode() == ResponseCode.OK) {
-                timestamp = response.getTimestampMap();
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
             DebugMessage.debug("Current timestamp:\n" +
-                    DebugMessage.timestampToString(timestamp), "listClass", DEBUG_FLAG);
+                    timestamp.toString(), "listClass", DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);
@@ -153,7 +153,7 @@ public class ProfessorFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call cancelEnrollment.", "cancelEnrollment", DEBUG_FLAG);
         CancelEnrollmentRequest request = CancelEnrollmentRequest.newBuilder().setStudentId(id)
-                                                                    .putAllTimestamp(timestamp).build();
+                                                                    .putAllTimestamp(timestamp.getMap()).build();
         CancelEnrollmentResponse response;
 
         try {
@@ -164,10 +164,10 @@ public class ProfessorFrontend extends ClientFrontend {
                     x -> (((CancelEnrollmentResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER)), true);
 
             if (response.getCode() == ResponseCode.OK) {
-                timestamp = response.getTimestampMap();
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
             DebugMessage.debug("Current timestamp:\n" +
-                    DebugMessage.timestampToString(timestamp), "cancelEnrollment", DEBUG_FLAG);
+                    timestamp.toString(), "cancelEnrollment", DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught: " + e.getStatus().getDescription(), null, DEBUG_FLAG);

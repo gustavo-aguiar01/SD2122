@@ -36,7 +36,7 @@ public abstract class ClientFrontend {
 
     public final int deadlineSecs = 5;
 
-    protected Map<String, Integer> timestamp = new HashMap<>();
+    protected Timestamp timestamp = new Timestamp();
 
     public ClientFrontend(String hostname, int port, String serviceName) throws RuntimeException {
         this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
@@ -78,8 +78,7 @@ public abstract class ClientFrontend {
         allServers.stream().forEach(sa -> timestamp.put(sa.getHost() + ":" + sa.getPort(), 0));
 
         DebugMessage.debug("Current timestamp:\n" +
-                        timestamp.keySet().stream().map(q ->  q + " : " + timestamp.get(q) + "\n")
-                                .collect(Collectors.joining()), "refreshServers", DEBUG_FLAG);
+                       timestamp.toString(), "refreshServers", DEBUG_FLAG);
 
     }
 
@@ -144,12 +143,6 @@ public abstract class ClientFrontend {
         }
 
         return response;
-    }
-
-    public void mergeTimestamp(Map<String, Integer> newTimestamp) {
-        newTimestamp.keySet().stream().forEach(sa -> timestamp.put(sa, newTimestamp.get(sa)));
-        DebugMessage.debug("Current timestamp:\n" +
-                DebugMessage.timestampToString(timestamp), "mergeTimestamp", DEBUG_FLAG);
     }
 
     public void shutdown() { namingServerChannel.shutdown(); }

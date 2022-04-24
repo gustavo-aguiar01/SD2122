@@ -1,13 +1,12 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.domain.Class;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassStudent;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ReplicaManager {
@@ -18,7 +17,10 @@ public class ReplicaManager {
     private boolean primary;
     private String host;
     private int port;
-    private Map<String, Integer> timestamp = new HashMap<>();
+    private Timestamp valueTimestamp = new Timestamp();
+    private Timestamp replicaTimestamp = new Timestamp();
+    private Map<Timestamp, LogRecord> log = new HashMap<>();
+
     ReentrantReadWriteLock timestampLock = new ReentrantReadWriteLock();
 
     public ReplicaManager (String primary, String host, int port) {
@@ -28,7 +30,8 @@ public class ReplicaManager {
         this.studentClass = new Class();
         this.host = host;
         this.port = port;
-        this.timestamp.put(host + ":" + port, 0);
+        this.valueTimestamp.put(host + ":" + port, 0);
+        this.replicaTimestamp.put(host + ":" + port, 0);
     }
 
     /**
@@ -57,12 +60,12 @@ public class ReplicaManager {
         return primary;
     }
 
-    public Map<String, Integer> getTimestamp() { return timestamp; }
+    public Timestamp getValueTimestamp() { return valueTimestamp; }
 
     public void addReplica(String host, int port) {
         timestampLock.writeLock().lock();
-        if (!timestamp.keySet().contains(host + ":" + port)) {
-            timestamp.put(host + ":" + port, 0);
+        if (!valueTimestamp.contains(host + ":" + port)) {
+            valueTimestamp.put(host + ":" + port, 0);
         }
         timestampLock.writeLock().unlock();
     }
@@ -75,7 +78,21 @@ public class ReplicaManager {
         return studentClass;
     }
 
-    public Map<String, Integer> enroll(ClassStudent student, boolean isAdmin) throws InactiveServerException,
+    public Timestamp issueUpdate(StateUpdate u) {
+
+        Timestamp resultTimestamp = new Timestamp(u.getTimestamp().getMap());
+
+        timestampLock.readLock().lock();
+        replicaTimestamp.put(host + ":" + port, valueTimestamp.get(host + ":" + port) + 1);
+        u.getTimestamp().put(host + ":" + port, valueTimestamp.get(host + ":" + port));
+        timestampLock.readLock().unlock();
+
+        log.put(resultTimestamp, new LogRecord(host + ":" + port, resultTimestamp, u));
+
+        return resultTimestamp;
+    }
+
+    public Timestamp enroll(ClassStudent student, boolean isAdmin) throws InactiveServerException,
             StudentAlreadyEnrolledException, EnrollmentsAlreadyClosedException,
             FullClassException, InvalidOperationException {
 
@@ -93,11 +110,11 @@ public class ReplicaManager {
         studentClass.enroll(student);
 
         timestampLock.writeLock().lock();
-        timestamp.put(host + ":" + port, timestamp.get(host + ":" + port) + 1);
-        Map<String, Integer> res = timestamp;
+        valueTimestamp.put(host + ":" + port, valueTimestamp.get(host + ":" + port) + 1);
+        Timestamp res = valueTimestamp;
         timestampLock.writeLock().unlock();
 
-        return timestamp;
+        return res;
 
     }
 
@@ -112,18 +129,18 @@ public class ReplicaManager {
         /* Assure that the timestamp is not altered while the internal Class State is being fetched */
         timestampLock.readLock().lock();
         ClassStateReport report = studentClass.reportClassState();
-        report.setTimestamp(this.timestamp);
+        report.setTimestamp(this.valueTimestamp);
         timestampLock.readLock().unlock();
         DEBUG_FLAG = true;
         return report;
     }
 
-    public ClassStateReport getClassState(Map<String, Integer> timestamp, boolean isAdmin) throws InactiveServerException,
+    public ClassStateReport getClassState(Timestamp timestamp, boolean isAdmin) throws InactiveServerException,
             NotUpToDateException {
 
-        if (!timestampBigger(this.timestamp, timestamp)) {
-            DebugMessage.debug("Current version \n" + DebugMessage.timestampToString(this.timestamp) +
-                    "is behind received request's version \n" + DebugMessage.timestampToString(timestamp), "reportClassState", DEBUG_FLAG);
+        if (!this.valueTimestamp.biggerThan(timestamp)) {
+            DebugMessage.debug("Current version \n" +  timestamp.toString() +
+                    "is behind received request's version \n" + timestamp.toString(), "reportClassState", DEBUG_FLAG);
             throw new InactiveServerException();
         }
 
@@ -139,7 +156,7 @@ public class ReplicaManager {
      */
     public void setClassState(int capacity, boolean areRegistrationsOpen,
                               Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents,
-                              Map<String, Integer> timestamp, boolean isAdmin) throws InactiveServerException {
+                             Timestamp timestamp, boolean isAdmin) throws InactiveServerException {
         DEBUG_FLAG = false;
         /* Can only access server contents if the server is active */
         if (!isAdmin && !this.isActive()) {
@@ -150,15 +167,15 @@ public class ReplicaManager {
         DebugMessage.debug("Setting received class state...", "setClassState", DEBUG_FLAG);
         timestampLock.writeLock().lock();
         studentClass.setClassState(capacity, areRegistrationsOpen, enrolledStudents, revokedStudents);
-        this.timestamp = timestamp;
+        this.valueTimestamp = timestamp;
         DebugMessage.debug("Current timestamp:\n" +
-                DebugMessage.timestampToString(timestamp), "setClassState", true);
+                timestamp.toString(), "setClassState", true);
         timestampLock.writeLock().unlock();
         DEBUG_FLAG = true;
 
     }
 
-    public Map<String, Integer> openEnrollments(int capacity, boolean isAdmin) throws InactiveServerException,
+    public Timestamp openEnrollments(int capacity, boolean isAdmin) throws InactiveServerException,
             InvalidOperationException, EnrollmentsAlreadyOpenException, FullClassException {
 
         /* Can only access server contents if the server is active */
@@ -177,15 +194,15 @@ public class ReplicaManager {
         studentClass.openEnrollments(capacity);
 
         timestampLock.writeLock().lock();
-        timestamp.put(host + ":" + port, timestamp.get(host + ":" + port) + 1);
-        Map<String, Integer> res = timestamp;
+        valueTimestamp.put(host + ":" + port, valueTimestamp.get(host + ":" + port) + 1);
+        Timestamp res = valueTimestamp;
         timestampLock.writeLock().unlock();
 
-        return timestamp;
+        return valueTimestamp;
 
     }
 
-    public Map<String, Integer> closeEnrollments(boolean isAdmin) throws InactiveServerException,
+    public Timestamp closeEnrollments(boolean isAdmin) throws InactiveServerException,
             InvalidOperationException, EnrollmentsAlreadyClosedException {
 
         /* Can only access server contents if the server is active */
@@ -204,15 +221,15 @@ public class ReplicaManager {
         studentClass.closeEnrollments();
 
         timestampLock.writeLock().lock();
-        timestamp.put(host + ":" + port, timestamp.get(host + ":" + port) + 1);
-        Map<String, Integer> res = timestamp;
+        valueTimestamp.put(host + ":" + port, valueTimestamp.get(host + ":" + port) + 1);
+        Timestamp res = valueTimestamp;
         timestampLock.writeLock().unlock();
 
-        return timestamp;
+        return valueTimestamp;
 
     }
 
-    public Map<String, Integer> revokeEnrollment(String studentId, boolean isAdmin) throws InvalidOperationException,
+    public Timestamp revokeEnrollment(String studentId, boolean isAdmin) throws InvalidOperationException,
             InactiveServerException, NonExistingStudentException {
 
         /* Can only access server contents if the server is active */
@@ -231,12 +248,17 @@ public class ReplicaManager {
         studentClass.revokeEnrollment(studentId);
 
         timestampLock.writeLock().lock();
-        timestamp.put(host + ":" + port, timestamp.get(host + ":" + port) + 1);
-        Map<String, Integer> res = timestamp;
+        valueTimestamp.put(host + ":" + port, valueTimestamp.get(host + ":" + port) + 1);
+        Timestamp res = valueTimestamp;
         timestampLock.writeLock().unlock();
 
-        return timestamp;
+        return valueTimestamp;
     }
+
+    public boolean isUpdateApplicable(StateUpdate u) {
+        return valueTimestamp.biggerThan(u.getTimestamp());
+    }
+
 
     /**
      * See if timestamp ts1[i] => ts2[i], ignoring null entries of ts2 that are not present in ts1
@@ -248,6 +270,5 @@ public class ReplicaManager {
         return ts2.keySet().stream().allMatch(sa -> (!ts1.containsKey(sa) && ts2.get(sa) == 0) ||
                 (ts1.containsKey(sa) && (ts1.get(sa) >= ts2.get(sa))));
     }
-
 
 }

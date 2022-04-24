@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
@@ -11,10 +12,6 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
 
 public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
@@ -35,7 +32,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         OpenEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
-        Map<String, Integer> timestamp = new HashMap<>();
+        Timestamp timestamp = new Timestamp();
 
         try {
 
@@ -56,7 +53,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = OpenEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp).build();
+        response = OpenEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp.getMap()).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -72,7 +69,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CloseEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
-        Map<String, Integer> timestamp = new HashMap<>();
+        Timestamp timestamp = new Timestamp();
 
         try {
             timestamp = replicaManager.closeEnrollments(false);
@@ -84,7 +81,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = CloseEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp).build();
+        response = CloseEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp.getMap()).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -100,11 +97,12 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         ListClassResponse response;
         ResponseCode code = ResponseCode.OK;
-        Map<String, Integer> timestamp = new HashMap<>();
+        Timestamp timestamp = new Timestamp();
 
         try {
 
-            ClassStateReport studentClass = replicaManager.getClassState(request.getTimestampMap(), false);
+            ClassStateReport studentClass = replicaManager.getClassState(new Timestamp(request.getTimestampMap()),
+                    false);
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
@@ -113,7 +111,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
                     .build();
 
             response = ListClassResponse.newBuilder().setCode(code)
-                    .setClassState(state).putAllTimestamp(studentClass.getTimestamp()).build();
+                    .setClassState(state).putAllTimestamp(studentClass.getTimestamp().getMap()).build();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -140,7 +138,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CancelEnrollmentResponse response;
         ResponseCode code = ResponseCode.OK;
-        Map<String, Integer> timestamp = new HashMap<>();
+        Timestamp timestamp = new Timestamp();
 
         if (!ClassStudent.isValidStudentId(request.getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
@@ -158,7 +156,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         response = CancelEnrollmentResponse.newBuilder()
-                .setCode(code).putAllTimestamp(timestamp).build();
+                .setCode(code).putAllTimestamp(timestamp.getMap()).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();

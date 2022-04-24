@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.classes.classserver;
 
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassStudent;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class ClassStateReport {
     private final boolean areRegistrationsOpen;
     private final Collection<ClassStudent> enrolledStudents = new ArrayList<>();
     private final Collection<ClassStudent> revokedStudents = new ArrayList<>();
-    private final Map<String, Integer> timestamp = new HashMap<>();
+    private Timestamp timestamp = new Timestamp();
 
     public ClassStateReport(int capacity, boolean areRegistrationsOpen,
                             Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents) {
@@ -44,12 +45,12 @@ public class ClassStateReport {
         return revokedStudents;
     }
 
-    public Map<String, Integer> getTimestamp() {
+    public Timestamp getTimestamp() {
         return this.timestamp;
     }
 
-    public void setTimestamp(Map<String, Integer> timestamp) {
-        this.timestamp.putAll(timestamp);
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 
 }

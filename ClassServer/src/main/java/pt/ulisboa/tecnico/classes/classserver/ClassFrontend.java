@@ -84,7 +84,7 @@ public class ClassFrontend {
             throw new RuntimeException(e.getStatus().getDescription());
         }
 
-        servers.stream().forEach(sa -> { if (!replicaManager.getTimestamp().keySet()
+        servers.stream().forEach(sa -> { if (!replicaManager.getValueTimestamp()
                                             .contains(sa.getHost() + ":" + sa.getPort())) {
                                              replicaManager.addReplica(sa.getHost(), sa.getPort()); }});
 
@@ -98,7 +98,6 @@ public class ClassFrontend {
 
         ClassStateReport studentClass = replicaManager.reportClassState(false);
         for (ServerAddress se : servers) {
-
             DebugMessage.debug("Propagating to secondary server @ " + se.getHost() + ":" + se.getPort() + "...",
                     null, DEBUG_FLAG);
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
@@ -107,9 +106,9 @@ public class ClassFrontend {
                     .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
             DebugMessage.debug("Current timestamp:\n" +
-                    DebugMessage.timestampToString(studentClass.getTimestamp()), "propagateState", true);
+                    studentClass.getTimestamp().toString(), "propagateState", true);
             PropagateStateRequest request = PropagateStateRequest.newBuilder().setClassState(state).
-                    putAllTimestamp(studentClass.getTimestamp()).build();
+                    putAllTimestamp(studentClass.getTimestamp().getMap()).build();
             PropagateStateResponse response;
 
             try {

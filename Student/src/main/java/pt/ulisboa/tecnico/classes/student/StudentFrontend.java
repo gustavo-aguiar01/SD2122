@@ -5,12 +5,11 @@ import io.grpc.*;
 import pt.ulisboa.tecnico.classes.ClientFrontend;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.Student;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
-
-import java.util.stream.Collectors;
 
 public class StudentFrontend extends ClientFrontend {
 
@@ -32,7 +31,8 @@ public class StudentFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call enroll.", "enroll", DEBUG_FLAG);
         Student newStudent = Student.newBuilder().setStudentId(id).setStudentName(name).build();
-        EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent).putAllTimestamp(timestamp).build();
+        EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent)
+                .putAllTimestamp(timestamp.getMap()).build();
         EnrollResponse response;
 
         try {
@@ -43,11 +43,11 @@ public class StudentFrontend extends ClientFrontend {
                     x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
 
             if (response.getCode() == ResponseCode.OK) {
-                mergeTimestamp(response.getTimestampMap());
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
 
             DebugMessage.debug("Current timestamp:\n" +
-                    DebugMessage.timestampToString(timestamp), "closeEnrollments", DEBUG_FLAG);
+                    timestamp.toString(), "closeEnrollments", DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
@@ -76,7 +76,7 @@ public class StudentFrontend extends ClientFrontend {
     public String listClass() throws RuntimeException {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(timestamp).build();
+        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(timestamp.getMap()).build();
         ListClassResponse response;
 
         try {
@@ -88,8 +88,11 @@ public class StudentFrontend extends ClientFrontend {
                             ((ListClassResponse)x).getCode().equals(ResponseCode.UNDER_MAINTENANCE), false);
 
             if (response.getCode() == ResponseCode.OK) {
-                mergeTimestamp(response.getTimestampMap());
+                timestamp.merge(new Timestamp(response.getTimestampMap()));
             }
+
+            DebugMessage.debug("Current timestamp:\n" +
+                    timestamp.toString(), "closeEnrollments", DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);

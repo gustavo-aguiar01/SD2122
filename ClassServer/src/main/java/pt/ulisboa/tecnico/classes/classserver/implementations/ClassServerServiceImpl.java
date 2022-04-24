@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
 
+import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
 import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
@@ -29,7 +30,7 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
             replicaManager.setClassState(state.getCapacity(), state.getOpenEnrollments(),
                             ClassUtilities.studentsToDomain(state.getEnrolledList()),
                             ClassUtilities.studentsToDomain(state.getDiscardedList()),
-                            request.getTimestampMap(), false);
+                            new Timestamp(request.getTimestampMap()), false);
             code = ResponseCode.OK;
 
         } catch (InactiveServerException e) {
