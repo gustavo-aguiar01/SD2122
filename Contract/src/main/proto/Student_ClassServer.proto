@@ -6,22 +6,23 @@ import "ClassesDefinitions.proto";
 // Student -> ClassServer Service
 
 message ListClassRequest {
-  int32 versionNumber = 1;
+  map<string, int32> timestamp = 1;
 }
 
 message ListClassResponse {
   ResponseCode code = 1;
   ClassState classState = 2;
-  int32 versionNumber = 3;
+  map<string, int32> timestamp = 3;
 }
 
 message EnrollRequest {
-  Student student = 1;
+  map<string, int32> timestamp = 1;
+  Student student = 2;
 }
 
 message EnrollResponse {
   ResponseCode code = 1;
-  int32 versionNumber = 2;
+  map<string, int32> timestamp = 2;
 }
 
 service StudentService {

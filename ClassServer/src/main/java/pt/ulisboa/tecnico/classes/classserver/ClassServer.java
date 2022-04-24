@@ -12,12 +12,12 @@ import java.util.TimerTask;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.ErrorMessage;
-import pt.ulisboa.tecnico.classes.classserver.domain.Class;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
-import pt.ulisboa.tecnico.classes.classserver.exceptions.InvalidOperationException;
 import pt.ulisboa.tecnico.classes.classserver.implementations.*;
 
 public class ClassServer {
+
+  private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
   // Class service name
   private static final String CLASS_SERVICE_NAME = "Turmas";
@@ -29,79 +29,7 @@ public class ClassServer {
   // Server host port
   private static int port;
   private static String host;
-  private static ClassServerState serverState;
   private static String primary;
-
-  // Server state class
-  public static class ClassServerState {
-
-    public enum ACCESS_TYPE {
-      READ,
-      WRITE
-    }
-
-    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-    private boolean active;
-    private Class studentClass;
-    private boolean primary;
-
-    public ClassServerState (String primary) {
-      this.active = true;
-      this.primary = primary.equals("P");
-      this.studentClass = new Class();
-    }
-
-    /**
-     *  Student class getter, but only returns it if the server
-     *  is active (for non admin users)
-     * @param isAdmin
-     * @return Class
-     * @throws InactiveServerException
-     */
-    public Class getStudentClass(boolean isAdmin) throws InactiveServerException {
-
-      DebugMessage.debug("Getting class, from" + (isAdmin ? " " : " non ") + "admin user.", "getStudentClass", DEBUG_FLAG);
-      DebugMessage.debug("The server is" + (isActive() ? " " : " not ") + "active.", null, DEBUG_FLAG);
-
-      /* Can only access server contents if the server is active */
-      if (!isAdmin && !this.isActive()) {
-        DebugMessage.debug("It's not possible to obtain student class.", null, DEBUG_FLAG);
-        throw new InactiveServerException();
-      }
-
-      DebugMessage.debug("Student class returned successfully.", null, DEBUG_FLAG);
-      return studentClass;
-    }
-
-    public Class getStudentClassToWrite(boolean isAdmin) throws InactiveServerException,
-            InvalidOperationException{
-      if (!primary) {
-        DebugMessage.debug("Cannot execute write operation on backup server.", null, DEBUG_FLAG);
-        throw new InvalidOperationException();
-      }
-      return this.getStudentClass(isAdmin);
-
-    }
-
-    /**
-     * Set server availability
-     * @param active
-     */
-    public synchronized void setActive(boolean active) {
-
-      DebugMessage.debug("Server is now " + (active ? "active" : "inactive."), "setActive", DEBUG_FLAG);
-      this.active = active;
-
-    }
-
-    /**
-     * Checks if the server is active
-     * @return boolean
-     */
-    public synchronized boolean isActive() {
-      return active;
-    }
-  }
 
   /**
    * Server main functionality
@@ -150,18 +78,18 @@ public class ClassServer {
       System.out.printf("args[%d] = %s%n", i, args[i]);
     }
 
-    serverState = new ClassServerState(primary);
+    ReplicaManager replicaManager = new ReplicaManager(primary, host, port);
 
     // Create services instances
-    final BindableService adminImpl = new AdminServiceImpl(serverState);
-    final BindableService professorImpl = new ProfessorServiceImpl(serverState);
-    final BindableService studentImpl = new StudentServiceImpl(serverState);
-    final BindableService classImpl = new ClassServerServiceImpl(serverState);
+    final BindableService adminImpl = new AdminServiceImpl(replicaManager);
+    final BindableService professorImpl = new ProfessorServiceImpl(replicaManager);
+    final BindableService studentImpl = new StudentServiceImpl(replicaManager);
+    final BindableService classImpl = new ClassServerServiceImpl(replicaManager);
 
     Server server = ServerBuilder.forPort(port).addService(adminImpl)
               .addService(professorImpl).addService(studentImpl).addService(classImpl).build();
 
-    final ClassFrontend classFrontend = new ClassFrontend(NAMING_HOSTNAME, NAMING_PORT_NUMBER);
+    final ClassFrontend classFrontend = new ClassFrontend(replicaManager, NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     try {
 
@@ -176,11 +104,9 @@ public class ClassServer {
       @Override
       public void run() {
         try {
-
           DebugMessage.debug(classFrontend
-                  .propagateState(CLASS_SERVICE_NAME, serverState.getStudentClass(false).reportClassState())
-                  , "propagateState", ClassServerState.DEBUG_FLAG);
-
+                  .propagateState(CLASS_SERVICE_NAME)
+                  , "propagateState", DEBUG_FLAG);
         } catch (InactiveServerException e) {
           ErrorMessage.error("Primary server tried to propagate its state while being inactive.");
         } catch (RuntimeException e) {
@@ -192,7 +118,7 @@ public class ClassServer {
     // Every 10 seconds a primary server propagates its state to all secondary servers
     Timer timer;
     TimerTask task = new PropagateState();
-    if (serverState.primary) {
+    if (replicaManager.isPrimary()) {
       timer = new Timer();
       timer.schedule(task, 0, 10000);
     }
@@ -200,7 +126,7 @@ public class ClassServer {
     // Make sure to delete the server from naming server upon termination
     class DeleteFromNamingServer extends Thread {
       public void run() {
-        if (serverState.primary) { task.cancel(); }
+        if (replicaManager.isPrimary()) { task.cancel(); }
         try {
 
           classFrontend.delete(CLASS_SERVICE_NAME, host, port);

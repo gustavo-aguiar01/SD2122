@@ -2,24 +2,26 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 
 import io.grpc.stub.StreamObserver;
 
+import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
-import pt.ulisboa.tecnico.classes.classserver.domain.Class;
-import pt.ulisboa.tecnico.classes.classserver.ClassServer;
-import pt.ulisboa.tecnico.classes.classserver.domain.ClassStateReport;
+import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentServiceImplBase;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.grpc.Status.INVALID_ARGUMENT;
 
 public class StudentServiceImpl extends StudentServiceImplBase {
 
-    private ClassServer.ClassServerState serverState;
+    private ReplicaManager replicaManager;
 
-    public StudentServiceImpl(ClassServer.ClassServerState serverState) {
-        this.serverState = serverState;
+    public StudentServiceImpl(ReplicaManager replicaManager) {
+        this.replicaManager = replicaManager;
     }
 
     /**
@@ -44,17 +46,10 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         EnrollResponse response;
         ResponseCode code = ResponseCode.OK;
-        int versionNumber = -1;
+        Map<String, Integer> timestamp = new HashMap<>();
 
         try {
-            Class studentClass = serverState.getStudentClassToWrite(false);
-
-            String id = request.getStudent().getStudentId();
-            String name = request.getStudent().getStudentName();
-            ClassStudent student = new ClassStudent(id, name);
-
-            versionNumber = studentClass.enroll(student);
-
+            timestamp = replicaManager.enroll(ClassUtilities.studentToDomain(request.getStudent()), false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
@@ -67,7 +62,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = EnrollResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
+        response = EnrollResponse.newBuilder().setCode(code).putAllTimestamp(timestamp).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -86,13 +81,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         try {
 
-            if (request.getVersionNumber() > serverState.getStudentClass(false).getVersionNumber()) {
-                responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.UNDER_MAINTENANCE).build());
-                responseObserver.onCompleted();
-                return ;
-            }
-
-            ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
+            ClassStateReport studentClass = replicaManager.getClassState(request.getTimestampMap(), false);
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
@@ -101,11 +90,15 @@ public class StudentServiceImpl extends StudentServiceImplBase {
                     .build();
 
             response = StudentClassServer.ListClassResponse.newBuilder().setCode(code)
-                    .setClassState(state).setVersionNumber(studentClass.getVersionNumber()).build();
+                    .setClassState(state).putAllTimestamp(studentClass.getTimestamp()).build();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = ListClassResponse.newBuilder()
+                    .setCode(code).build();
+        } catch (NotUpToDateException e) {
+            code = ResponseCode.UNDER_MAINTENANCE;
+            response = StudentClassServer.ListClassResponse.newBuilder()
                     .setCode(code).build();
         }
 

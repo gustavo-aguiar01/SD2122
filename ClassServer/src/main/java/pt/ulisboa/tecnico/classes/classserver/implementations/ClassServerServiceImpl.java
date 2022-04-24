@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.classserver.ClassServer;
+import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
@@ -11,10 +12,10 @@ import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerServiceGrpc.*;
 
 public class ClassServerServiceImpl extends ClassServerServiceImplBase {
 
-    ClassServer.ClassServerState serverState;
+    ReplicaManager replicaManager;
 
-    public ClassServerServiceImpl(ClassServer.ClassServerState serverState) {
-        this.serverState = serverState;
+    public ClassServerServiceImpl(ReplicaManager replicaManager) {
+        this.replicaManager = replicaManager;
     }
 
     @Override
@@ -25,12 +26,10 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         ClassState state = request.getClassState();
 
         try {
-
-            serverState.getStudentClass(false)
-                    .setClassState(state.getCapacity(), state.getOpenEnrollments(),
+            replicaManager.setClassState(state.getCapacity(), state.getOpenEnrollments(),
                             ClassUtilities.studentsToDomain(state.getEnrolledList()),
                             ClassUtilities.studentsToDomain(state.getDiscardedList()),
-                            request.getVersionNumber());
+                            request.getTimestampMap(), false);
             code = ResponseCode.OK;
 
         } catch (InactiveServerException e) {

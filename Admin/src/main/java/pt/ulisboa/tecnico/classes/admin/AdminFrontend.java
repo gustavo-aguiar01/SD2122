@@ -48,7 +48,7 @@ public class AdminFrontend extends ClientFrontend {
         StringBuilder builder = new StringBuilder();
 
         // Command usage: activate P/S
-        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
 
             ManagedChannel channel = null;
             ActivateRequest request = ActivateRequest.getDefaultInstance();
@@ -115,7 +115,7 @@ public class AdminFrontend extends ClientFrontend {
 
         StringBuilder builder = new StringBuilder();
 
-        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
 
             ManagedChannel channel = null;
             DeactivateRequest request = DeactivateRequest.getDefaultInstance();
@@ -182,7 +182,7 @@ public class AdminFrontend extends ClientFrontend {
 
         StringBuilder builder = new StringBuilder();
 
-        for (ServerAddress sa : primary.equals("P") ? super.writeServers : super.readServers) {
+        for (ServerAddress sa : primary.equals("P") ? super.primaryServers : super.secondaryServers) {
 
             DebugMessage.debug("Dumping from " + (primary.equals("P") ? "primary" : "secondary") + " server @ " + sa.getHost() + ":" + sa.getPort() + ".",
                     null, DEBUG_FLAG);

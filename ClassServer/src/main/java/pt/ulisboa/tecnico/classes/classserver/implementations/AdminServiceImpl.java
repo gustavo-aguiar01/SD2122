@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.classes.classserver.implementations;
 import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.classserver.*;
-import pt.ulisboa.tecnico.classes.classserver.domain.ClassStateReport;
+import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.ResponseCode;
@@ -15,10 +15,10 @@ import pt.ulisboa.tecnico.classes.contract.admin.AdminServiceGrpc.AdminServiceIm
 
 public class AdminServiceImpl extends AdminServiceImplBase {
 
-    ClassServer.ClassServerState serverState;
+    ReplicaManager replicaManager;
 
-    public AdminServiceImpl(ClassServer.ClassServerState serverState) {
-        this.serverState = serverState;
+    public AdminServiceImpl(ReplicaManager replicaManager) {
+        this.replicaManager = replicaManager;
     }
 
     /**
@@ -29,7 +29,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     @Override
     public void activate (ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
 
-        serverState.setActive(true);
+        replicaManager.setActive(true);
         ActivateResponse response = ActivateResponse.newBuilder().setCode(ResponseCode.OK).build();
 
         responseObserver.onNext(response);
@@ -44,7 +44,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     @Override
     public void deactivate (DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
 
-        serverState.setActive(false);
+        replicaManager.setActive(false);
         DeactivateResponse response = DeactivateResponse.newBuilder().setCode(ResponseCode.OK).build();
 
         responseObserver.onNext(response);
@@ -61,10 +61,8 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
         DumpResponse response;
         ResponseCode code = ResponseCode.OK;
-
         try {
-
-            ClassStateReport studentClass = serverState.getStudentClass(true).reportClassState();
+            ClassStateReport studentClass = replicaManager.getStudentClass(true).reportClassState();
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
@@ -74,7 +72,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
             response = DumpResponse.newBuilder().setCode(code)
                     .setClassState(state).build();
-
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = DumpResponse.newBuilder()

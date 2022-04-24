@@ -6,8 +6,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.classes.DebugMessage;
 import pt.ulisboa.tecnico.classes.Stringify;
-import pt.ulisboa.tecnico.classes.classserver.domain.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
+import pt.ulisboa.tecnico.classes.classserver.exceptions.InactiveServerException;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.naming.ClassNamingServerServiceGrpc;
@@ -24,13 +24,15 @@ public class ClassFrontend {
 
     private final ClassNamingServerServiceBlockingStub namingServerStub;
     private final ManagedChannel channel;
+    private final ReplicaManager replicaManager;
 
     // Set flag to true to print debug messages
-    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+    private static boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
-    public ClassFrontend(String nameServerHostname, int nameServerPort) {
+    public ClassFrontend(ReplicaManager replicaManager, String nameServerHostname, int nameServerPort) {
         channel = ManagedChannelBuilder.forAddress(nameServerHostname, nameServerPort).usePlaintext().build();
         namingServerStub = ClassNamingServerServiceGrpc.newBlockingStub(channel);
+        this.replicaManager = replicaManager;
     }
 
     public void register(String serviceName, String host, int port, String primary) throws RuntimeException {
@@ -64,8 +66,8 @@ public class ClassFrontend {
 
     }
 
-    public String propagateState(String serviceName, ClassStateReport studentClass) throws RuntimeException {
-
+    public String propagateState(String serviceName) throws RuntimeException, InactiveServerException {
+        DEBUG_FLAG = false;
         DebugMessage.debug("Calling propagateState remote call.", "propagateState", DEBUG_FLAG);
         // Propagate state to secondary servers
         List<Qualifier> qualifiers = new ArrayList<>();
@@ -82,6 +84,10 @@ public class ClassFrontend {
             throw new RuntimeException(e.getStatus().getDescription());
         }
 
+        servers.stream().forEach(sa -> { if (!replicaManager.getTimestamp().keySet()
+                                            .contains(sa.getHost() + ":" + sa.getPort())) {
+                                             replicaManager.addReplica(sa.getHost(), sa.getPort()); }});
+
         String message;
         if (servers.size() == 0) {
             DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
@@ -89,6 +95,8 @@ public class ClassFrontend {
         } else {
             message = Stringify.format(ResponseCode.OK); // This will be changed if something went wrong
         }
+
+        ClassStateReport studentClass = replicaManager.reportClassState(false);
         for (ServerAddress se : servers) {
 
             DebugMessage.debug("Propagating to secondary server @ " + se.getHost() + ":" + se.getPort() + "...",
@@ -98,8 +106,10 @@ public class ClassFrontend {
                     .addAllEnrolled(ClassUtilities.classStudentsToGrpc(studentClass.getEnrolledStudents()))
                     .addAllDiscarded(ClassUtilities.classStudentsToGrpc(studentClass.getRevokedStudents()))
                     .build();
+            DebugMessage.debug("Current timestamp:\n" +
+                    DebugMessage.timestampToString(studentClass.getTimestamp()), "propagateState", true);
             PropagateStateRequest request = PropagateStateRequest.newBuilder().setClassState(state).
-                    setVersionNumber(studentClass.getVersionNumber()).build();
+                    putAllTimestamp(studentClass.getTimestamp()).build();
             PropagateStateResponse response;
 
             try {
@@ -127,7 +137,7 @@ public class ClassFrontend {
                 }
             }
         }
-
+        DEBUG_FLAG = true;
         return message;
 
     }

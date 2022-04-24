@@ -10,11 +10,12 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.Student;
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc;
 
+import java.util.stream.Collectors;
+
 public class StudentFrontend extends ClientFrontend {
 
     // Set flag to true to print debug messages
     private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
-    private int versionNumber = 0;
 
     public StudentFrontend(String hostname, int port, String serviceName) {
         super(hostname, port, serviceName);
@@ -31,7 +32,7 @@ public class StudentFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call enroll.", "enroll", DEBUG_FLAG);
         Student newStudent = Student.newBuilder().setStudentId(id).setStudentName(name).build();
-        EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent).build();
+        EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent).putAllTimestamp(timestamp).build();
         EnrollResponse response;
 
         try {
@@ -42,10 +43,11 @@ public class StudentFrontend extends ClientFrontend {
                     x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), true);
 
             if (response.getCode() == ResponseCode.OK) {
-                versionNumber = response.getVersionNumber();
+                mergeTimestamp(response.getTimestampMap());
             }
 
-            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
+            DebugMessage.debug("Current timestamp:\n" +
+                    DebugMessage.timestampToString(timestamp), "closeEnrollments", DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
@@ -74,7 +76,7 @@ public class StudentFrontend extends ClientFrontend {
     public String listClass() throws RuntimeException {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.newBuilder().setVersionNumber(versionNumber).build();
+        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(timestamp).build();
         ListClassResponse response;
 
         try {
@@ -86,9 +88,8 @@ public class StudentFrontend extends ClientFrontend {
                             ((ListClassResponse)x).getCode().equals(ResponseCode.UNDER_MAINTENANCE), false);
 
             if (response.getCode() == ResponseCode.OK) {
-                versionNumber = response.getVersionNumber();
+                mergeTimestamp(response.getTimestampMap());
             }
-            DebugMessage.debug("Current version number: " + versionNumber, null, DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);

@@ -4,21 +4,24 @@ import io.grpc.stub.StreamObserver;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
+import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
+import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
-import pt.ulisboa.tecnico.classes.classserver.domain.Class;
-import pt.ulisboa.tecnico.classes.classserver.ClassServer;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.professor.ProfessorServiceGrpc.ProfessorServiceImplBase;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
-    ClassServer.ClassServerState serverState;
+    ReplicaManager replicaManager;
 
-    public ProfessorServiceImpl(ClassServer.ClassServerState serverState) {
-        this.serverState = serverState;
+    public ProfessorServiceImpl(ReplicaManager serverState) {
+        this.replicaManager = serverState;
     }
 
     /**
@@ -29,19 +32,19 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
     @Override
     public void openEnrollments(OpenEnrollmentsRequest request, StreamObserver<OpenEnrollmentsResponse> responseObserver) {
 
-        if (request.getCapacity() < 0) {
-            responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer.").asRuntimeException());
-            return;
-        }
 
         OpenEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
-        int versionNumber = -1;
+        Map<String, Integer> timestamp = new HashMap<>();
 
         try {
 
-            Class studentClass = serverState.getStudentClassToWrite(false);
-            versionNumber = studentClass.openEnrollments(request.getCapacity());
+            if (request.getCapacity() < 0) {
+                responseObserver.onError(INVALID_ARGUMENT.withDescription("Capacity input has to be a positive integer.").asRuntimeException());
+                return;
+            }
+
+            timestamp = replicaManager.openEnrollments(request.getCapacity(), false);
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -53,7 +56,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = OpenEnrollmentsResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
+        response = OpenEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -69,11 +72,10 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CloseEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
-        int versionNumber = -1;
+        Map<String, Integer> timestamp = new HashMap<>();
 
         try {
-            Class studentClass = serverState.getStudentClassToWrite(false);
-            versionNumber = studentClass.closeEnrollments();
+            timestamp = replicaManager.closeEnrollments(false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
@@ -82,7 +84,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }
 
-        response = CloseEnrollmentsResponse.newBuilder().setCode(code).setVersionNumber(versionNumber).build();
+        response = CloseEnrollmentsResponse.newBuilder().setCode(code).putAllTimestamp(timestamp).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -98,16 +100,11 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         ListClassResponse response;
         ResponseCode code = ResponseCode.OK;
+        Map<String, Integer> timestamp = new HashMap<>();
 
         try {
 
-            if (request.getVersionNumber() > serverState.getStudentClass(false).getVersionNumber()) {
-                responseObserver.onNext(ListClassResponse.newBuilder().setCode(ResponseCode.UNDER_MAINTENANCE).build());
-                responseObserver.onCompleted();
-                return ;
-            }
-
-            ClassStateReport studentClass = serverState.getStudentClass(false).reportClassState();
+            ClassStateReport studentClass = replicaManager.getClassState(request.getTimestampMap(), false);
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
@@ -116,10 +113,14 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
                     .build();
 
             response = ListClassResponse.newBuilder().setCode(code)
-                    .setClassState(state).setVersionNumber(studentClass.getVersionNumber()).build();
+                    .setClassState(state).putAllTimestamp(studentClass.getTimestamp()).build();
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
+            response = ListClassResponse.newBuilder()
+                    .setCode(code).build();
+        } catch (NotUpToDateException e) {
+            code = ResponseCode.UNDER_MAINTENANCE;
             response = ListClassResponse.newBuilder()
                     .setCode(code).build();
         }
@@ -139,7 +140,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CancelEnrollmentResponse response;
         ResponseCode code = ResponseCode.OK;
-        int versionNumber = -1;
+        Map<String, Integer> timestamp = new HashMap<>();
 
         if (!ClassStudent.isValidStudentId(request.getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
@@ -147,9 +148,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-            Class studentClass = serverState.getStudentClassToWrite(false);
-            versionNumber = studentClass.revokeEnrollment(request.getStudentId());
-
+            timestamp = replicaManager.revokeEnrollment(request.getStudentId(), false);
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (NonExistingStudentException e) {
@@ -159,7 +158,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         response = CancelEnrollmentResponse.newBuilder()
-                .setCode(code).setVersionNumber(versionNumber).build();
+                .setCode(code).putAllTimestamp(timestamp).build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
