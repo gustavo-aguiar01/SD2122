@@ -275,9 +275,8 @@ public class AdminFrontend extends ClientFrontend {
 
                 if (channel != null) { channel.shutdown(); }
 
-                // TODO : check if this exeptions apply to activateGossip
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    DebugMessage.debug("No servers are available", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
                 } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
                     DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
@@ -336,9 +335,8 @@ public class AdminFrontend extends ClientFrontend {
 
                 if (channel != null) { channel.shutdown(); }
 
-                // TODO : check if this exeptions apply to deactivateGossip
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    DebugMessage.debug("No servers are available", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
                 } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
                     DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);
@@ -397,9 +395,8 @@ public class AdminFrontend extends ClientFrontend {
 
                 if (channel != null) { channel.shutdown(); }
 
-                // TODO : check if this exeptions apply to gossip
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
-                    DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
+                    DebugMessage.debug("No servers are available.", null, DEBUG_FLAG);
                     builder.append(Stringify.format(ResponseCode.INACTIVE_SERVER)); // Edge case where backup server closed after primary checked if servers size != 0
                 } else if (e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
                     DebugMessage.debug("Timeout on the requested operation.", null, DEBUG_FLAG);

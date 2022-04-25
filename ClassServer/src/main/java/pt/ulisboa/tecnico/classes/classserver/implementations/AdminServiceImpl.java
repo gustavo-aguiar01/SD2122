@@ -195,8 +195,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
             } catch (StatusRuntimeException e) {
 
-                // TODO : here the gossip can be deactivated
-                // TODO : onError statusCode is not INVALID_ARGUMENT
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
                     DebugMessage.debug("No other servers available to propagate state.", null, DEBUG_FLAG);
                     responseObserver.onError(INVALID_ARGUMENT

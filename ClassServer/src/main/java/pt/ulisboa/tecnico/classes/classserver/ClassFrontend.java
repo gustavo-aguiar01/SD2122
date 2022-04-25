@@ -145,7 +145,6 @@ public class ClassFrontend {
 
             } catch (StatusRuntimeException e) {
 
-                // TODO : here the gossip can be deactivated
                 if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) { // The backup server performed a peer shutdown
                     DebugMessage.debug("No secondary servers available.", null, DEBUG_FLAG);
                     return Stringify.format(ResponseCode.INACTIVE_SERVER); // Edge case where backup server closed after primary checked if servers size != 0
