@@ -15,6 +15,19 @@ message ClassState {
   repeated Student discarded = 4;
 }
 
+message LogRecord {
+  string id = 1;
+  map<string, int32> timestamp = 2;
+  Update update = 3;
+}
+
+message Update {
+  string operationName = 1;
+  repeated string arguments = 2;
+  map<string, int32> timestamp = 3;
+}
+
+
 enum ResponseCode {
   OK = 0;
   NON_EXISTING_STUDENT = 1;

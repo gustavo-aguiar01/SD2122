@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.Timestamp;
 import pt.ulisboa.tecnico.classes.classserver.ReplicaManager;
+import pt.ulisboa.tecnico.classes.classserver.StateUpdate;
 import pt.ulisboa.tecnico.classes.classserver.domain.*;
 import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
@@ -12,6 +13,8 @@ import pt.ulisboa.tecnico.classes.contract.student.StudentServiceGrpc.StudentSer
 import pt.ulisboa.tecnico.classes.contract.student.StudentClassServer.*;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
+
+import java.util.Arrays;
 
 import static io.grpc.Status.INVALID_ARGUMENT;
 
@@ -48,15 +51,11 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         Timestamp timestamp = new Timestamp();
 
         try {
-            timestamp = replicaManager.enroll(ClassUtilities.studentToDomain(request.getStudent()), false);
+            timestamp = replicaManager.issueUpdate(new StateUpdate("enroll",
+                    Arrays.asList(request.getStudent().getStudentId(), request.getStudent().getStudentName()),
+                                  new Timestamp(request.getTimestampMap())), false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
-        } catch (EnrollmentsAlreadyClosedException e) {
-            code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
-        } catch (StudentAlreadyEnrolledException e) {
-            code = ResponseCode.STUDENT_ALREADY_ENROLLED;
-        } catch (FullClassException e) {
-            code = ResponseCode.FULL_CLASS;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         }

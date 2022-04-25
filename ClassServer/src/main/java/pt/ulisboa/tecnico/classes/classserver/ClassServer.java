@@ -89,7 +89,7 @@ public class ClassServer {
     Server server = ServerBuilder.forPort(port).addService(adminImpl)
               .addService(professorImpl).addService(studentImpl).addService(classImpl).build();
 
-    final ClassFrontend classFrontend = new ClassFrontend(replicaManager, NAMING_HOSTNAME, NAMING_PORT_NUMBER);
+    final ClassFrontend classFrontend = new ClassFrontend(replicaManager, host, port, NAMING_HOSTNAME, NAMING_PORT_NUMBER);
 
     try {
 
@@ -118,10 +118,9 @@ public class ClassServer {
     // Every 10 seconds a primary server propagates its state to all secondary servers
     Timer timer;
     TimerTask task = new PropagateState();
-    if (replicaManager.isPrimary()) {
-      timer = new Timer();
-      timer.schedule(task, 0, 10000);
-    }
+    timer = new Timer();
+    timer.schedule(task, 0, 10000);
+
 
     // Make sure to delete the server from naming server upon termination
     class DeleteFromNamingServer extends Thread {

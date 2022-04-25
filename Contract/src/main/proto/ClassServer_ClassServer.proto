@@ -5,9 +5,13 @@ import "ClassesDefinitions.proto";
 
 // ClassServer -> ClassServer Service
 
+//message PropagateStateRequest {
+//  ClassState classState = 1;
+//  map <string, int32> timestamp = 2;
+//}
+
 message PropagateStateRequest {
-  ClassState classState = 1;
-  map <string, int32> timestamp = 2;
+    repeated LogRecord logRecords = 1;
 }
 
 message PropagateStateResponse {
