@@ -83,11 +83,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
 
     }
 
-    /**
-     * "deactivate" remote call server implementation
-     * @param request
-     * @param responseObserver
-     */
     @Override
     public void activateGossip (ActivateGossipRequest request, StreamObserver<ActivateGossipResponse> responseObserver) {
 
@@ -98,11 +93,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    /**
-     * "deactivate" remote call server implementation
-     * @param request
-     * @param responseObserver
-     */
+
     @Override
     public void deactivateGossip (DeactivateGossipRequest request, StreamObserver<DeactivateGossipResponse> responseObserver) {
 
@@ -113,11 +104,7 @@ public class AdminServiceImpl extends AdminServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    /**
-     * "deactivate" remote call server implementation
-     * @param request
-     * @param responseObserver
-     */
+
     @Override
     public void gossip (GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
 
