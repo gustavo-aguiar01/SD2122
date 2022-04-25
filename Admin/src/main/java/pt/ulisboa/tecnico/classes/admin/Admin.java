@@ -15,6 +15,9 @@ public class Admin {
   private static final String ACTIVATE_CMD = "activate";
   private static final String DEACTIVATE_CMD = "deactivate";
   private static final String DUMP_CMD = "dump";
+  private static final String ACTIVATE_GOSSIP_CMD = "activateGossip";
+  private static final String DEACTIVATE_GOSSIP_CMD = "deactivateGossip";
+  private static final String GOSSIP_CMD = "gossip";
 
   /**
    * Admin class main functionality
@@ -88,6 +91,45 @@ public class Admin {
           System.out.println(adminFrontend.dump(arguments[0]));
         } catch (RuntimeException e) {
           throw new RuntimeException(e.getMessage());
+        }
+      }
+
+      // Activate gossip between servers - activateGossip cmd
+      else if (ACTIVATE_GOSSIP_CMD.equals(command)) {
+        if (line.length != 2) {
+          ErrorMessage.error("Invalid " +  ACTIVATE_CMD + " command usage.");
+          continue;
+        }
+        try {
+          System.out.println(adminFrontend.activateGossip(arguments[0]));
+        } catch (RuntimeException e) {
+          System.out.println(e.getMessage());
+        }
+      }
+
+      // Deactivate gossip between servers - activateGossip cmd
+      else if (DEACTIVATE_GOSSIP_CMD.equals(command)) {
+        if (line.length != 2) {
+          ErrorMessage.error("Invalid " +  ACTIVATE_CMD + " command usage.");
+          continue;
+        }
+        try {
+          System.out.println(adminFrontend.deactivateGossip(arguments[0]));
+        } catch (RuntimeException e) {
+          System.out.println(e.getMessage());
+        }
+      }
+
+      // Force gossip between servers - gossip cmd
+      else if (GOSSIP_CMD.equals(command)) {
+        if (line.length != 2) {
+          ErrorMessage.error("Invalid " +  ACTIVATE_CMD + " command usage.");
+          continue;
+        }
+        try {
+          System.out.println(adminFrontend.gossip(arguments[0]));
+        } catch (RuntimeException e) {
+          System.out.println(e.getMessage());
         }
       }
 
