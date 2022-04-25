@@ -1,6 +1,6 @@
 package pt.ulisboa.tecnico.classes.classserver.exceptions;
 
-public class NonExistingStudentException extends Exception {
+public class NonExistingStudentException extends ClassDomainException{
 
     public NonExistingStudentException() {}
 

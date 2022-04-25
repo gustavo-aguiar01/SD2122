@@ -119,7 +119,7 @@ public class ClassServer {
     Timer timer;
     TimerTask task = new PropagateState();
     timer = new Timer();
-    timer.schedule(task, 0, 10000);
+    timer.schedule(task, 0, 20000);
 
 
     // Make sure to delete the server from naming server upon termination

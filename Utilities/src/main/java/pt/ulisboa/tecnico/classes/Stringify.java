@@ -40,6 +40,7 @@ public class Stringify {
       case ENROLLMENTS_ALREADY_CLOSED -> "Enrollments are already closed.";
       case INACTIVE_SERVER -> "The server is down.";
       case WRITING_NOT_SUPPORTED -> "The server you contacted does not support writes.";
+      case UPDATE_ISSUED-> "The requested operation could not be immediately issued. Confirm the result later.";
       default -> "Unknown error.";
     };
   }

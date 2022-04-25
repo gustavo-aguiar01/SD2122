@@ -48,19 +48,28 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         EnrollResponse response;
         ResponseCode code = ResponseCode.OK;
-        Timestamp timestamp = new Timestamp();
 
         try {
-            timestamp = replicaManager.issueUpdate(new StateUpdate("enroll",
+            replicaManager.issueUpdate(new StateUpdate("enroll",
                     Arrays.asList(request.getStudent().getStudentId(), request.getStudent().getStudentName()),
                                   new Timestamp(request.getTimestampMap())), false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
+        } catch (EnrollmentsAlreadyClosedException e) {
+            code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+        } catch (StudentAlreadyEnrolledException e) {
+            code = ResponseCode.STUDENT_ALREADY_ENROLLED;
+        } catch (FullClassException e) {
+            code = ResponseCode.FULL_CLASS;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
+        } catch (UpdateIssuedException e) {
+            code = ResponseCode.UPDATE_ISSUED;
+        } catch (ClassDomainException e) {
+            ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = EnrollResponse.newBuilder().setCode(code).putAllTimestamp(timestamp.getMap()).build();
+        response = EnrollResponse.newBuilder().setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -79,7 +88,7 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         try {
 
-            ClassStateReport studentClass = replicaManager.getClassState(new Timestamp(request.getTimestampMap()), false);
+            ClassStateReport studentClass = replicaManager.reportClassState(false);
 
             ClassState state = ClassState.newBuilder().setCapacity(studentClass.getCapacity())
                     .setOpenEnrollments(studentClass.areRegistrationsOpen())
@@ -93,10 +102,6 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
             response = ListClassResponse.newBuilder()
-                    .setCode(code).build();
-        } catch (NotUpToDateException e) {
-            code = ResponseCode.UNDER_MAINTENANCE;
-            response = StudentClassServer.ListClassResponse.newBuilder()
                     .setCode(code).build();
         }
 

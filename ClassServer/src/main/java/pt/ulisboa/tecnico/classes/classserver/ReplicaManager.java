@@ -19,15 +19,17 @@ public class ReplicaManager {
     private boolean primary;
     private String host;
     private int port;
-    private Timestamp valueTimestamp = new Timestamp();
-    private Timestamp replicaTimestamp = new Timestamp();
-    private Map<Timestamp, LogRecord> log = new ConcurrentHashMap<>();
-    private Map<String, Timestamp> tableTimestamp = new  ConcurrentHashMap<>();
+    private Timestamp valueTimestamp = new Timestamp();                  /* version timestamp of the class */
+    private Timestamp replicaTimestamp = new Timestamp();                /* version timestamp of the update log */
+    private Map<Timestamp, LogRecord> log = new ConcurrentHashMap<>();   /* log of received update operations */
+
+    /* to have rough estimates of which updates are known by other replica */
+    private Map<String, Timestamp> tableTimestamp = new ConcurrentHashMap<>();
     private Set<Timestamp> executedOperations = ConcurrentHashMap.newKeySet();
 
     ReentrantReadWriteLock timestampLock = new ReentrantReadWriteLock();
 
-    public ReplicaManager (String primary, String host, int port) {
+    public ReplicaManager(String primary, String host, int port) {
         this.studentClass = new Class();
         this.active = true;
         this.primary = primary.equals("P");
@@ -41,6 +43,7 @@ public class ReplicaManager {
 
     /**
      * Set server availability
+     *
      * @param active
      */
     public void setActive(boolean active) {
@@ -51,6 +54,7 @@ public class ReplicaManager {
 
     /**
      * Checks if the server is active
+     *
      * @return boolean
      */
     public boolean isActive() {
@@ -59,13 +63,16 @@ public class ReplicaManager {
 
     /**
      * Checks if the server is a primary
+     *
      * @return boolean
      */
     public boolean isPrimary() {
         return primary;
     }
 
-    public Timestamp getValueTimestamp() { return valueTimestamp; }
+    public Timestamp getValueTimestamp() {
+        return valueTimestamp;
+    }
 
     public void addReplica(String host, int port) {
         timestampLock.writeLock().lock();
@@ -92,7 +99,8 @@ public class ReplicaManager {
     }
 
     public Collection<LogRecord> reportLogRecords() {
-        return log.values();
+        return log.values().stream().filter(lr -> valueTimestamp.biggerThan(lr.getUpdate().getTimestamp()))
+                .collect(Collectors.toSet());
     }
 
     public void mergeLogRecords(List<LogRecord> logRecords, boolean isAdmin) throws InactiveServerException {
@@ -102,14 +110,33 @@ public class ReplicaManager {
             throw new InactiveServerException();
         }
 
-        DebugMessage.debug("Received:\n" + logRecords.stream().map(LogRecord::toString)
+        DebugMessage.debug("Current log:\n" + log.values().stream().map(LogRecord::toString)
                 .collect(Collectors.joining("\n")), "mergeLogRecords", DEBUG_FLAG);
 
-        logRecords.forEach(lr -> {
-                if (!replicaTimestamp.biggerThan(lr.getTimestamp())) {
-                    log.put(lr.getTimestamp(), lr);
-                    replicaTimestamp.merge(lr.getTimestamp());
-                    tableTimestamp.put(lr.getReplicaManagerId(), lr.getTimestamp());
+        DebugMessage.debug("Received:\n" + logRecords.stream().map(LogRecord::toString)
+                .collect(Collectors.joining("\n")), null, DEBUG_FLAG);
+
+        DebugMessage.debug("Filtering those which are not before " + replicaTimestamp.toString(),
+                null, DEBUG_FLAG);
+
+        List<LogRecord> orderedLogRecords = logRecords.stream().sorted(new Comparator<LogRecord>() {
+            @Override
+            public int compare(LogRecord o1, LogRecord o2) {
+                if (o1.getTimestamp().biggerThan(o2.getTimestamp())) {
+                    return 1;
+                } else if (o2.getTimestamp().biggerThan(o1.getTimestamp())) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }).toList();
+
+        orderedLogRecords.forEach(lr -> {
+            if (!replicaTimestamp.biggerThan(lr.getTimestamp())) {
+                log.put(lr.getTimestamp(), lr);
+                replicaTimestamp.merge(lr.getTimestamp());
+                tableTimestamp.put(lr.getReplicaManagerId(), lr.getTimestamp());
             }
         });
 
@@ -123,12 +150,7 @@ public class ReplicaManager {
 
     public void applyUpdates() {
 
-        /* Get set of not applied stable updates */
-        Set<LogRecord> stableRecords= log.values().stream()
-                .filter(lr -> valueTimestamp.biggerThan(lr.getUpdate().getTimestamp()))
-                .collect(Collectors.toSet());
-
-        List <LogRecord> orderedUpdates = stableRecords.stream().sorted(new Comparator<LogRecord>() {
+        List<LogRecord> orderedUpdates = log.values().stream().sorted(new Comparator<LogRecord>() {
             @Override
             public int compare(LogRecord o1, LogRecord o2) {
                 if (o1.getUpdate().getTimestamp().biggerThan(o2.getUpdate().getTimestamp())) {
@@ -142,25 +164,47 @@ public class ReplicaManager {
         }).toList();
 
         for (LogRecord lr : orderedUpdates) {
-            if (executedOperations.contains(lr.getTimestamp())) {
-                continue;
+            try {
+                if (valueTimestamp.biggerThan(lr.getUpdate().getTimestamp())) {
+                    executeUpdate(lr);
+                }
+            } catch (ClassDomainException e) {
+                ; /* ignore exception since no client feedback will be given */
             }
-            List<String> arguments = lr.getUpdate().getOperationArgs();
-            switch (lr.getUpdate().getOperationName()) {
-                case "enroll" -> enroll(new ClassStudent(arguments.get(0), arguments.get(1)));
-                case "openEnrollments" -> openEnrollments(Integer.parseInt(arguments.get(0)));
-                case "closeEnrollments" -> closeEnrollments();
-                case "cancelEnrollment" -> revokeEnrollment(arguments.get(0));
+        }
+    }
+
+    public void executeUpdate(LogRecord record) throws ClassDomainException {
+
+        ClassDomainException caughtException = null;
+        DebugMessage.debug("Executing " + record.getTimestamp().toString(), "executeUpdate", DEBUG_FLAG);
+        if (executedOperations.contains(record.getTimestamp())) {
+            DebugMessage.debug("Operation already executed.", "executeUpdate", DEBUG_FLAG);
+            return;
+        }
+        List<String> arguments = record.getUpdate().getOperationArgs();
+        try {
+            switch (record.getUpdate().getOperationName()) {
+                case "enroll" -> studentClass.enroll(new ClassStudent(arguments.get(0), arguments.get(1)));
+                case "openEnrollments" -> studentClass.openEnrollments(Integer.parseInt(arguments.get(0)));
+                case "closeEnrollments" -> studentClass.closeEnrollments();
+                case "cancelEnrollment" -> studentClass.revokeEnrollment(arguments.get(0));
                 default -> {
                 }
             }
-            timestampLock.writeLock().lock();
-            valueTimestamp.merge(lr.getTimestamp());
-            timestampLock.writeLock().unlock();
-            executedOperations.add(lr.getTimestamp());
-            DebugMessage.debug("Current timestamp after applying " + lr.getUpdate().getOperationName()
-                    + ": " + valueTimestamp.toString(), "applyUpdates", DEBUG_FLAG);
+        } catch (ClassDomainException e) {
+            caughtException = e;
+        }
 
+        timestampLock.writeLock().lock();
+        valueTimestamp.merge(record.getTimestamp());
+        timestampLock.writeLock().unlock();
+        executedOperations.add(record.getTimestamp());
+        DebugMessage.debug("Current timestamp after applying " + record.getUpdate().getOperationName()
+                + ": " + valueTimestamp.toString() + "with id " + record.getTimestamp().toString(), "executeUpdate", DEBUG_FLAG);
+
+        if (caughtException != null) {
+            throw caughtException;
         }
     }
 
@@ -176,6 +220,7 @@ public class ReplicaManager {
             /* see if all tableTimestamp entries have an entry for the issuer bigger than its own */
             if (tableTimestamp.keySet().stream()
                     .allMatch(sa -> tableTimestamp.get(sa).get(issuer) >= log.get(ts).getTimestamp().get(issuer))) {
+                System.out.println("Badjoras!");
                 log.remove(ts);
             }
         });
@@ -183,8 +228,8 @@ public class ReplicaManager {
                 .collect(Collectors.joining("\n")), "discardLogRecords", DEBUG_FLAG);
     }
 
-    public Timestamp issueUpdate(StateUpdate u, boolean isAdmin) throws InactiveServerException,
-            InvalidOperationException {
+    public void issueUpdate(StateUpdate u, boolean isAdmin) throws InactiveServerException,
+            InvalidOperationException, ClassDomainException, UpdateIssuedException {
 
         if (!isAdmin && !this.isActive()) {
             DebugMessage.debug("It's not possible to obtain student class.", "reportClassState", DEBUG_FLAG);
@@ -207,15 +252,11 @@ public class ReplicaManager {
         log.put(resultTimestamp, new LogRecord(host + ":" + port, resultTimestamp, u));
         DebugMessage.debug("Issued update:\n" + log.get(resultTimestamp).toString(), "issueUpdate", DEBUG_FLAG);
 
-        return resultTimestamp;
-    }
-
-    public void enroll(ClassStudent student) {
-        try {
-            studentClass.enroll(student);
-        } catch( StudentAlreadyEnrolledException | EnrollmentsAlreadyClosedException |
-                FullClassException e) {
-            DebugMessage.debug(e.getMessage(), "enroll", DEBUG_FLAG);
+        /* check if issued update is stable */
+        if (valueTimestamp.biggerThan(u.getTimestamp())) {
+            executeUpdate(log.get(resultTimestamp));
+        } else {
+            throw new UpdateIssuedException();
         }
 
     }
@@ -236,46 +277,4 @@ public class ReplicaManager {
         DEBUG_FLAG = true;
         return report;
     }
-
-    public ClassStateReport getClassState(Timestamp timestamp, boolean isAdmin) throws InactiveServerException,
-            NotUpToDateException {
-
-        if (!this.valueTimestamp.biggerThan(timestamp)) {
-            DebugMessage.debug("Current version \n" +  valueTimestamp.toString() +
-                    "is behind received request's version \n" + timestamp.toString(), "reportClassState", DEBUG_FLAG);
-            throw new InactiveServerException();
-        }
-
-       return reportClassState(isAdmin);
-    }
-
-    public void openEnrollments(int capacity) {
-
-        try {
-            studentClass.openEnrollments(capacity);
-        } catch (FullClassException | EnrollmentsAlreadyOpenException e) {
-            DebugMessage.debug(e.getMessage(), "openEnrollments", DEBUG_FLAG);
-        }
-
-    }
-
-    public void closeEnrollments() {
-        try {
-            studentClass.closeEnrollments();
-        } catch (EnrollmentsAlreadyClosedException e) {
-            DebugMessage.debug(e.getMessage(), "closeEnrollments", DEBUG_FLAG);
-        }
-
-    }
-
-    public void revokeEnrollment(String studentId) {
-
-        try {
-            studentClass.revokeEnrollment(studentId);
-        } catch (NonExistingStudentException e) {
-            DebugMessage.debug(e.getMessage(), "revokeEnrollment", DEBUG_FLAG);
-        }
-
-    }
-
 }

@@ -30,6 +30,7 @@ public class StateUpdate {
 
     @Override
     public String toString() {
-        return "< Name:" + operationName + ", Arguments: " + String.join(", ", operationArgs) + ">";
+        return "< Name:" + operationName + ", Arguments: " + String.join(", ", operationArgs) +
+                ", Timestamp: " + timestamp + ">";
     }
 }
