@@ -77,6 +77,8 @@ public class ClassFrontend {
         DebugMessage.debug("Calling propagateState remote call.", "propagateState", DEBUG_FLAG);
         // check if the gossip is active
         if (!replicaManager.isActiveGossip()) {
+            DebugMessage.debug("Gossip in this server is inactive", null, DEBUG_FLAG);
+
             return "Gossip is not active";
         }
 

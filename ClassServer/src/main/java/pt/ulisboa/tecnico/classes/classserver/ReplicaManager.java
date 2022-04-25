@@ -100,6 +100,14 @@ public class ReplicaManager {
         return studentClass;
     }
 
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort()  {
+        return port;
+    }
+
     public Collection<LogRecord> reportLogRecords() {
         return log.values();
     }
