@@ -47,8 +47,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("openEnrollments",
                             List.of(Integer.toString(request.getCapacity())),
-                            new Timestamp(request.getReadTimestampMap())),
-                    new Timestamp(request.getWriteTimestampMap()), false);
+                            new Timestamp(request.getWriteTimestampMap())),
+                    new Timestamp(request.getReadTimestampMap()), false);
 
 
         } catch (InactiveServerException e) {
@@ -90,8 +90,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         try {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("closeEnrollments", List.of(),
-                            new Timestamp(request.getReadTimestampMap())),
-                    new Timestamp(request.getWriteTimestampMap()), false);
+                            new Timestamp(request.getWriteTimestampMap())),
+                    new Timestamp(request.getReadTimestampMap()), false);
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -167,8 +167,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         try {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("cancelEnrollment", List.of(request.getStudentId()),
-                            new Timestamp(request.getReadTimestampMap())),
-                    new Timestamp(request.getWriteTimestampMap()), false);
+                            new Timestamp(request.getWriteTimestampMap())),
+                    new Timestamp(request.getReadTimestampMap()), false);
 
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;

@@ -53,8 +53,8 @@ public class StudentServiceImpl extends StudentServiceImplBase {
         try {
             timestamp = replicaManager.issueUpdate(new StateUpdate("enroll",
                     Arrays.asList(request.getStudent().getStudentId(), request.getStudent().getStudentName()),
-                                  new Timestamp(request.getReadTimestampMap())),
-                    new Timestamp(request.getWriteTimestampMap()), false);
+                            new Timestamp(request.getWriteTimestampMap())),
+                    new Timestamp(request.getReadTimestampMap()), false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {

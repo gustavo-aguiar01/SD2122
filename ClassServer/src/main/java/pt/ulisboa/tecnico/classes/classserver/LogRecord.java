@@ -5,10 +5,10 @@ import pt.ulisboa.tecnico.classes.Timestamp;
 public class LogRecord {
 
     private String replicaManagerId;
-    private Timestamp timestamp;
-    private StateUpdate update;
-    private long physicalClock;
-    private Status status;
+    private Timestamp timestamp;        /* unique timestamp associated with the log */
+    private StateUpdate update;         /* the operation */
+    private long physicalClock;         /* physical clock of server commit (to untie concurrent operations) */
+    private Status status;              /* update operation on the state */
 
     public enum Status {
         SUCCESS,

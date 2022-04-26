@@ -3,12 +3,11 @@ package pt.ulisboa.tecnico.classes.classserver;
 import pt.ulisboa.tecnico.classes.Timestamp;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class StateUpdate {
     private String operationName;
     private List<String> operationArgs;
-    private Timestamp timestamp;
+    private Timestamp timestamp;        /* Read timestamp of the update issuer */
 
     public StateUpdate(String operationName, List<String> operationArgs, Timestamp timestamp) {
         this.operationName = operationName;

@@ -44,9 +44,20 @@ public class Timestamp {
                 (timestamp.containsKey(sa) && timestamp.get(sa) >= o.get(sa)));
     }
 
+    public boolean strictlyBiggerThan(Timestamp other) {
+        Map<String, Integer> o = other.getMap();
+        return o.keySet().stream().allMatch( sa -> (timestamp.containsKey(sa) && timestamp.get(sa) > o.get(sa)));
+    }
+
+    public boolean isEqual(Timestamp other) {
+        return  other.getMap().keySet().stream().allMatch(sa -> (!timestamp.containsKey(sa) && other.get(sa) == 0) ||
+                (timestamp.containsKey(sa) && timestamp.get(sa) == other.get(sa)));
+    }
+
     @Override
     public String toString() {
         return "(" + String.join(", ", timestamp.keySet().stream().map(q ->  q + " : " + timestamp.get(q))
                 .collect(Collectors.toList())) + ")";
     }
+
 }

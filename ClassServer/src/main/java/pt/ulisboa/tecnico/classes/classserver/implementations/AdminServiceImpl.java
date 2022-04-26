@@ -7,7 +7,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
-import pt.ulisboa.tecnico.classes.Stringify;
 import pt.ulisboa.tecnico.classes.classserver.*;
 import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.domain.ClassUtilities;
