@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.classes.classserver.domain;
 
 import pt.ulisboa.tecnico.classes.DebugMessage;
+import pt.ulisboa.tecnico.classes.classserver.ClassStateReport;
 import pt.ulisboa.tecnico.classes.classserver.exceptions.*;
 
 
@@ -15,13 +16,12 @@ public class Class {
     boolean registrationsOpen = false;
     private final HashMap<String, ClassStudent> enrolledStudents = new HashMap<>();
     private final HashMap<String, ClassStudent> revokedStudents = new HashMap<>();
-    private int versionNumber = 0;
 
     /* To tackle the synchronization problem where a student enrolls and a professor decreases capacity */
     ReentrantReadWriteLock stateConsistencyLock = new ReentrantReadWriteLock();
 
     /* Set flag to true to print debug messages. */
-    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+    private static boolean DEBUG_FLAG = (System.getProperty("debug") != null);
 
     public Class() {}
 
@@ -53,22 +53,10 @@ public class Class {
      * Set registrations state to openRegistrations
      * @param openRegistrations
      */
-    private void setRegistrationsOpen(boolean openRegistrations) {
+    public void setRegistrationsOpen(boolean openRegistrations) {
         this.registrationsOpen = openRegistrations;
     }
 
-    /**
-     * Get the class version number
-     * @return int
-     */
-    public int getVersionNumber() { return versionNumber; }
-
-    /**
-     * Set the version number
-     * @param versionNumber
-     */
-    private void setVersionNumber(int versionNumber ) { this.versionNumber = versionNumber; }
-    
     /**
      * Getter of the collection of all enrolled students
      * @return Collection<ClassStudent>
@@ -86,14 +74,12 @@ public class Class {
     }
 
     private void setEnrolledStudents(Collection<ClassStudent> students) {
-
         this.enrolledStudents.clear();
         students.stream().forEach(s -> this.enrolledStudents.put(s.getId(), s));
 
     }
 
     private void setDiscardedStudents(Collection<ClassStudent> students) {
-
         this.revokedStudents.clear();
         students.stream().forEach(s -> this.revokedStudents.put(s.getId(), s));
 
@@ -140,7 +126,7 @@ public class Class {
      * @throws StudentAlreadyEnrolledException
      * @throws FullClassException
      */
-    public int enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
+    public void enroll(ClassStudent student) throws EnrollmentsAlreadyClosedException, StudentAlreadyEnrolledException, FullClassException  {
 
         stateConsistencyLock.writeLock().lock();
         boolean openRegistrations = this.areRegistrationsOpen();
@@ -169,14 +155,10 @@ public class Class {
 
         revokedStudents.keySet().removeIf(s -> s.equals(student.getId()));
         enrolledStudents.put(student.getId(), student);
-        versionNumber ++;
-        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Enrolled student with id: " + student.getId()
                 + " and name: " + student.getName() + ".", null, DEBUG_FLAG);
-
-        return versionNumber;
 
     }
 
@@ -187,7 +169,7 @@ public class Class {
      * @throws EnrollmentsAlreadyOpenException
      * @throws FullClassException
      */
-    public int openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
+    public void openEnrollments(int capacity) throws EnrollmentsAlreadyOpenException, FullClassException {
 
         stateConsistencyLock.writeLock().lock();
         boolean openRegistrations = this.areRegistrationsOpen();
@@ -208,15 +190,11 @@ public class Class {
         }
 
         setCapacity(capacity);
-        versionNumber ++;
-        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         setRegistrationsOpen(true);
         DebugMessage.debug("Opened class enrollment registrations with capacity of " +
                 capacity + ".", null, DEBUG_FLAG);
-
-        return versionNumber;
 
     }
 
@@ -224,7 +202,7 @@ public class Class {
      * Close class for student enrollments
      * @throws EnrollmentsAlreadyClosedException
      */
-    public int closeEnrollments() throws EnrollmentsAlreadyClosedException {
+    public void closeEnrollments() throws EnrollmentsAlreadyClosedException {
 
         stateConsistencyLock.writeLock().lock();
 
@@ -237,13 +215,9 @@ public class Class {
         }
 
         setRegistrationsOpen(false);
-        versionNumber ++;
-        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Closed class enrollment registrations.", null, DEBUG_FLAG);
-
-        return result;
     }
 
     /**
@@ -251,7 +225,7 @@ public class Class {
      * @param id
      * @throws NonExistingStudentException
      */
-    public int revokeEnrollment(String id) throws NonExistingStudentException {
+    public void revokeEnrollment(String id) throws NonExistingStudentException {
 
         stateConsistencyLock.writeLock().lock();
 
@@ -265,14 +239,23 @@ public class Class {
 
         revokedStudents.put(id, enrolledStudents.get(id));
         enrolledStudents.remove(id);
-        versionNumber ++;
-        int result = versionNumber;
         stateConsistencyLock.writeLock().unlock();
 
         DebugMessage.debug("Revoked student " + id +
                 "'s registration from class.", null, DEBUG_FLAG);
+    }
 
-        return result;
+
+    public void removeEnrolledStudent(String studentId) {
+        stateConsistencyLock.writeLock().lock();
+        enrolledStudents.remove(studentId);
+        stateConsistencyLock.writeLock().unlock();
+    }
+
+    public void addRevokedStudent(ClassStudent student) {
+        stateConsistencyLock.writeLock().lock();
+        revokedStudents.put(student.getId(), student);
+        stateConsistencyLock.writeLock().unlock();
     }
 
     /**
@@ -281,34 +264,14 @@ public class Class {
      */
     public ClassStateReport reportClassState() {
 
+        DEBUG_FLAG = false;
         DebugMessage.debug("Reporting class state...", "reportClassState", DEBUG_FLAG);
         stateConsistencyLock.readLock().lock();
         ClassStateReport report = new ClassStateReport(capacity, areRegistrationsOpen(), getEnrolledStudentsCollection(),
-                getRevokedStudentsCollection(), getVersionNumber());
+                getRevokedStudentsCollection());
         stateConsistencyLock.readLock().unlock();
+        DEBUG_FLAG = true;
         return report;
-
-    }
-
-    /**
-     * Set the class state in an atomic manner
-     * @param capacity
-     * @param areRegistrationsOpen
-     * @param enrolledStudents
-     * @param revokedStudents
-     */
-    public void setClassState(int capacity, boolean areRegistrationsOpen,
-                              Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents,
-                              int versionNumber) {
-
-        DebugMessage.debug("Setting received class state...", "setClassState", DEBUG_FLAG);
-        stateConsistencyLock.writeLock().lock();
-        setCapacity(capacity);
-        setRegistrationsOpen(areRegistrationsOpen);
-        setEnrolledStudents(enrolledStudents);
-        setDiscardedStudents(revokedStudents);
-        setVersionNumber(versionNumber);
-        stateConsistencyLock.writeLock().unlock();
 
     }
 

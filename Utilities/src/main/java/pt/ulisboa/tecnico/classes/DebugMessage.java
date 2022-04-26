@@ -1,5 +1,8 @@
 package pt.ulisboa.tecnico.classes;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class DebugMessage {
 
     public static void debug(String debugMessage, String function, boolean debugFlag) {
@@ -10,4 +13,5 @@ public class DebugMessage {
             System.err.println(("    - "  + debugMessage).replace("\n", "\n      "));
         }
     }
+
 }

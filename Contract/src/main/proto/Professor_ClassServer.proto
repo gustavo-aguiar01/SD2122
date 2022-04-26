@@ -7,38 +7,44 @@ import "ClassesDefinitions.proto";
 
 message OpenEnrollmentsRequest {
   int32 capacity = 1;
+  map<string, int32> readTimestamp = 2;
+  map<string, int32> writeTimestamp = 3;
 }
 
 message OpenEnrollmentsResponse {
   ResponseCode code = 1;
-  int32 versionNumber = 2;
+  map<string, int32> timestamp = 3;
 }
 
-message CloseEnrollmentsRequest {}
+message CloseEnrollmentsRequest {
+  map<string, int32> readTimestamp = 1;
+  map<string, int32> writeTimestamp = 2;
+}
 
 message CloseEnrollmentsResponse {
   ResponseCode code = 1;
-  int32 versionNumber = 2;
+  map<string, int32> timestamp = 3;
 }
 
 message ListClassRequest {
-  int32 versionNumber = 1;
+  map<string, int32> timestamp = 1;
 }
 
 message ListClassResponse {
   ResponseCode code = 1;
   ClassState classState = 2;
-  int32 versionNumber = 3;
+  map<string, int32> timestamp = 3;
 }
 
 message CancelEnrollmentRequest {
   string studentId = 1;
-  int32 versionNumber = 2;
+  map<string, int32> readTimestamp = 2;
+  map<string, int32> writeTimestamp = 3;
 }
 
 message CancelEnrollmentResponse {
   ResponseCode code = 1;
-  int32 versionNumber = 2;
+  map<string, int32> timestamp = 3;
 }
 
 service ProfessorService {

@@ -15,6 +15,26 @@ message ClassState {
   repeated Student discarded = 4;
 }
 
+message LogRecord {
+  string id = 1;
+  map<string, int32> timestamp = 2;
+  Update update = 3;
+  int64 physicalClock = 4;
+  LogStatus status = 5;
+}
+
+message Update {
+  string operationName = 1;
+  repeated string arguments = 2;
+  map<string, int32> timestamp = 4;
+}
+
+enum LogStatus {
+  SUCCESS = 0;
+  FAIL = 1;
+  NONE = 2;
+}
+
 enum ResponseCode {
   OK = 0;
   NON_EXISTING_STUDENT = 1;
@@ -24,5 +44,6 @@ enum ResponseCode {
   ENROLLMENTS_ALREADY_CLOSED = 5;
   INACTIVE_SERVER = 6;
   WRITING_NOT_SUPPORTED = 7;
-  UNDER_MAINTENANCE = 8;
+  UPDATE_ISSUED = 8;
+  GOSSIP_NOT_ACTIVE = 9;
 }
