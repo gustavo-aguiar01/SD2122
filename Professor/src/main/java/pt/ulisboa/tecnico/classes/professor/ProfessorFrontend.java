@@ -29,7 +29,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call openEnrollments.", "openEnrollments", DEBUG_FLAG);
         OpenEnrollmentsRequest request = OpenEnrollmentsRequest.newBuilder().setCapacity(capacity)
-                                                                .putAllTimestamp(writeTimestamp.getMap()).build();
+                .putAllWriteTimestamp(writeTimestamp.getMap()).putAllReadTimestamp(readTimestamp.getMap())
+                .build();
         OpenEnrollmentsResponse response;
 
         try {
@@ -45,6 +46,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
             DebugMessage.debug("Current write timestamp:\n" +
                     writeTimestamp.toString(), "openEnrollments", DEBUG_FLAG);
+            DebugMessage.debug("Current read timestamp:\n" +
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
 
         } catch (StatusRuntimeException e) {
@@ -74,7 +77,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call closeEnrollments.", "closeEnrollments", DEBUG_FLAG);
         CloseEnrollmentsRequest request = CloseEnrollmentsRequest.newBuilder()
-                .putAllTimestamp(writeTimestamp.getMap()).build();
+                .putAllWriteTimestamp(writeTimestamp.getMap()).putAllReadTimestamp(readTimestamp.getMap())
+                .build();
         CloseEnrollmentsResponse response;
 
         try {
@@ -90,6 +94,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
             DebugMessage.debug("Current write timestamp:\n" +
                     writeTimestamp.toString(), "closeEnrollments", DEBUG_FLAG);
+            DebugMessage.debug("Current read timestamp:\n" +
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
 
         } catch (StatusRuntimeException e) {
@@ -123,8 +129,10 @@ public class ProfessorFrontend extends ClientFrontend {
             if (response.getCode() == ResponseCode.OK) {
                 readTimestamp.merge(new Timestamp(response.getTimestampMap()));
             }
+            DebugMessage.debug("Current write timestamp:\n" +
+                    writeTimestamp.toString(), "listClass", DEBUG_FLAG);
             DebugMessage.debug("Current read timestamp:\n" +
-                    readTimestamp.toString(), "listClass", DEBUG_FLAG);
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);
@@ -155,7 +163,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
         DebugMessage.debug("Calling remote call cancelEnrollment.", "cancelEnrollment", DEBUG_FLAG);
         CancelEnrollmentRequest request = CancelEnrollmentRequest.newBuilder().setStudentId(id)
-                                                                    .putAllTimestamp(readTimestamp.getMap()).build();
+                .putAllWriteTimestamp(writeTimestamp.getMap()).putAllReadTimestamp(readTimestamp.getMap())
+                .build();
         CancelEnrollmentResponse response;
 
         try {
@@ -171,6 +180,8 @@ public class ProfessorFrontend extends ClientFrontend {
 
             DebugMessage.debug("Current write timestamp:\n" +
                     writeTimestamp.toString(), "cancelEnrollment", DEBUG_FLAG);
+            DebugMessage.debug("Current read timestamp:\n" +
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
         } catch (StatusRuntimeException e) {
             DebugMessage.debug("Runtime exception caught: " + e.getStatus().getDescription(), null, DEBUG_FLAG);

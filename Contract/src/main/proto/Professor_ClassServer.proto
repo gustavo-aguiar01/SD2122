@@ -7,7 +7,8 @@ import "ClassesDefinitions.proto";
 
 message OpenEnrollmentsRequest {
   int32 capacity = 1;
-  map<string, int32> timestamp = 2;
+  map<string, int32> readTimestamp = 2;
+  map<string, int32> writeTimestamp = 3;
 }
 
 message OpenEnrollmentsResponse {
@@ -16,7 +17,8 @@ message OpenEnrollmentsResponse {
 }
 
 message CloseEnrollmentsRequest {
-  map<string, int32> timestamp = 1;
+  map<string, int32> readTimestamp = 1;
+  map<string, int32> writeTimestamp = 2;
 }
 
 message CloseEnrollmentsResponse {
@@ -36,8 +38,8 @@ message ListClassResponse {
 
 message CancelEnrollmentRequest {
   string studentId = 1;
-  int32 versionNumber = 2;
-  map<string, int32> timestamp = 3;
+  map<string, int32> readTimestamp = 2;
+  map<string, int32> writeTimestamp = 3;
 }
 
 message CancelEnrollmentResponse {

@@ -167,14 +167,12 @@ public class ReplicaManager {
         }).toList();
 
         for (LogRecord lr: orderedLogRecords) {
-            System.out.println("Seeing " + lr.toString());
             if (!replicaTimestamp.biggerThan(lr.getTimestamp())) {
                 log.put(lr.getTimestamp(), lr);
                 replicaTimestamp.merge(lr.getTimestamp());
                 tableTimestamp.put(lr.getReplicaManagerId(), lr.getTimestamp());
             }
         }
-
 
         /* if there are no incoming logs, update table timestamp info */
         tableTimestamp.put(issuer, writeTimestamp);
@@ -207,15 +205,26 @@ public class ReplicaManager {
                 /* only do operations that have not been executed or that have been rolled back */
                 if ((!executedOperations.contains(lr.getTimestamp()) ||
                      suspendedOperations.contains(lr.getTimestamp()))) {
-                    if (lr.getStatus().equals(LogRecord.Status.SUCCESS)) {
-                        checkConflicts(lr);
+                    if (lr.getStatus().equals(LogRecord.Status.FAIL)) {
+                        timestampLock.writeLock().lock();
+                        valueTimestamp.merge(lr.getTimestamp());
+                        timestampLock.writeLock().unlock();
+                        executedOperations.add(lr.getTimestamp());
+                        DebugMessage.debug("Current timestamp after applying "
+                                + lr.getUpdate().getOperationName()
+                                + ": " + valueTimestamp.toString() + "with id "
+                                + lr.getTimestamp().toString(), "executeUpdate", DEBUG_FLAG);
+                    } else {
+                        if (lr.getStatus().equals(LogRecord.Status.SUCCESS)) {
+                            checkConflicts(lr);
+                        }
+                        executeUpdate(lr);
+                        lr.setStatus(LogRecord.Status.SUCCESS);
                     }
-                    executeUpdate(lr);
                 }
-                lr.setStatus(LogRecord.Status.SUCCESS);
             } catch (ClassDomainException e) {
                 if (lr.getStatus().equals(LogRecord.Status.NONE)) {
-                    lr.setStatus(LogRecord.Status.FAIL);;
+                    lr.setStatus(LogRecord.Status.FAIL);
                 }
             }
         }
@@ -274,7 +283,8 @@ public class ReplicaManager {
                 if (!studentClass.areRegistrationsOpen()) {
                     boolean found = false;
                     for (LogRecord lr : toUndo) {
-                        if (lr.getUpdate().getOperationName().equals("cancelEnrollments")) {
+                        if (lr.getUpdate().getOperationName().equals("closeEnrollments")) {
+                            studentClass.setRegistrationsOpen(true);
                             executedOperations.remove(lr.getTimestamp());
                             suspendedOperations.add(lr.getTimestamp());
                             DebugMessage.debug("Suspend registrations closing operation ",
@@ -283,7 +293,7 @@ public class ReplicaManager {
                             break;
                         }
                     }
-                    /* if there were no conflicting enrolls found, suspend the operation to try to apply it later */
+
                     if (!found) {
                         suspendedOperations.add(record.getTimestamp());
                     }
@@ -294,7 +304,8 @@ public class ReplicaManager {
             case "closeEnrollments":
                 /* remove all currently enrolled students */
                 for (LogRecord lr : toUndo) {
-                    if (studentClass.isStudentEnrolled(lr.getUpdate().getOperationArgs().get(0))) {
+                    if (lr.getUpdate().getOperationName().equals("enroll") &&
+                            studentClass.isStudentEnrolled(lr.getUpdate().getOperationArgs().get(0))) {
                         executedOperations.remove(lr.getTimestamp());
                         suspendedOperations.add(lr.getTimestamp());
                         studentClass.removeEnrolledStudent(lr.getUpdate().getOperationArgs().get(0));
@@ -354,9 +365,9 @@ public class ReplicaManager {
             /* see if all tableTimestamp entries have an entry for the issuer bigger than its own */
             if (tableTimestamp.keySet().stream()
                     .allMatch(sa -> tableTimestamp.get(sa).get(issuer) >= log.get(ts).getTimestamp().get(issuer))) {
-                if (suspendedOperations.contains(ts)) {
-                    commitSuspendedOperation(log.get(ts));
-                }
+                //if (suspendedOperations.contains(ts)) {
+                //    commitSuspendedOperation(log.get(ts));
+                //}
                 log.remove(ts);
             }
 
@@ -365,19 +376,19 @@ public class ReplicaManager {
                 .collect(Collectors.joining("\n")), "discardLogRecords", DEBUG_FLAG);
     }
 
-    public void commitSuspendedOperation(LogRecord record) {
-        switch(record.getUpdate().getOperationName()) {
-            case "enroll":
-                studentClass.addRevokedStudent(new ClassStudent(record.getUpdate().getOperationArgs().get(0),
-                        record.getUpdate().getOperationArgs().get(1)));
-                DebugMessage.debug("Definitely Revoked " + record.getUpdate().getOperationArgs().get(0)
-                        + " student's enrollment", null, DEBUG_FLAG);
-            default:
-                break;
-        }
-    }
+    //public void commitSuspendedOperation(LogRecord record) {
+    //    switch(record.getUpdate().getOperationName()) {
+    //        case "enroll":
+    //            studentClass.addRevokedStudent(new ClassStudent(record.getUpdate().getOperationArgs().get(0),
+    //                    record.getUpdate().getOperationArgs().get(1)));
+    //            DebugMessage.debug("Definitely Revoked " + record.getUpdate().getOperationArgs().get(0)
+    //                    + " student's enrollment", null, DEBUG_FLAG);
+    //        default:
+    //            break;
+    //    }
+    //}
 
-    public Timestamp issueUpdate(StateUpdate u, boolean isAdmin) throws InactiveServerException,
+    public Timestamp issueUpdate(StateUpdate u, Timestamp writeTimestamp, boolean isAdmin) throws InactiveServerException,
             InvalidOperationException, ClassDomainException, UpdateIssuedException {
 
         if (!isAdmin && !this.isActive()) {
@@ -391,7 +402,7 @@ public class ReplicaManager {
             throw new InvalidOperationException();
         }
 
-        Timestamp resultTimestamp = new Timestamp(u.getTimestamp().getMap());
+        Timestamp resultTimestamp = new Timestamp(writeTimestamp.getMap());
 
         /* Allow for concurrent issuing of updates */
         stateLock.readLock().lock();

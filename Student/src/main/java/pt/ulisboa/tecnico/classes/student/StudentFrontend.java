@@ -32,7 +32,8 @@ public class StudentFrontend extends ClientFrontend {
         DebugMessage.debug("Calling remote call enroll.", "enroll", DEBUG_FLAG);
         Student newStudent = Student.newBuilder().setStudentId(id).setStudentName(name).build();
         EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent)
-                .putAllTimestamp(writeTimestamp.getMap()).build();
+                .putAllWriteTimestamp(writeTimestamp.getMap()).putAllReadTimestamp(readTimestamp.getMap())
+                .build();
         EnrollResponse response;
 
         try {
@@ -48,6 +49,8 @@ public class StudentFrontend extends ClientFrontend {
 
             DebugMessage.debug("Current write timestamp:\n" +
                     writeTimestamp.toString(), "enroll", DEBUG_FLAG);
+            DebugMessage.debug("Current read timestamp:\n" +
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
 
         } catch (StatusRuntimeException e) {
@@ -77,7 +80,7 @@ public class StudentFrontend extends ClientFrontend {
     public String listClass() throws RuntimeException {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(writeTimestamp.getMap()).build();
+        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(readTimestamp.getMap()).build();
         ListClassResponse response;
 
         try {
@@ -91,8 +94,10 @@ public class StudentFrontend extends ClientFrontend {
                 readTimestamp.merge(new Timestamp(response.getTimestampMap()));
             }
 
-            DebugMessage.debug("Current timestamp:\n" +
-                    readTimestamp.toString(), "closeEnrollments", DEBUG_FLAG);
+            DebugMessage.debug("Current write timestamp:\n" +
+                    writeTimestamp.toString(), "listClass", DEBUG_FLAG);
+            DebugMessage.debug("Current read timestamp:\n" +
+                    readTimestamp.toString(), null, DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);

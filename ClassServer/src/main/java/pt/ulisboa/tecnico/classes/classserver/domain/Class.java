@@ -53,7 +53,7 @@ public class Class {
      * Set registrations state to openRegistrations
      * @param openRegistrations
      */
-    private void setRegistrationsOpen(boolean openRegistrations) {
+    public void setRegistrationsOpen(boolean openRegistrations) {
         this.registrationsOpen = openRegistrations;
     }
 

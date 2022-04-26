@@ -47,7 +47,9 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("openEnrollments",
                             List.of(Integer.toString(request.getCapacity())),
-                            new Timestamp(request.getTimestampMap())), false);
+                            new Timestamp(request.getReadTimestampMap())),
+                    new Timestamp(request.getWriteTimestampMap()), false);
+
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -66,7 +68,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = OpenEnrollmentsResponse.newBuilder().putAllTimestamp(timestamp.getMap()).setCode(code).build();
+        response = OpenEnrollmentsResponse.newBuilder().putAllTimestamp(timestamp.getMap()
+        ).setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -87,7 +90,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         try {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("closeEnrollments", List.of(),
-                            new Timestamp(request.getTimestampMap())), false);
+                            new Timestamp(request.getReadTimestampMap())),
+                    new Timestamp(request.getWriteTimestampMap()), false);
 
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
@@ -163,7 +167,8 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         try {
             timestamp = replicaManager.issueUpdate(
                     new StateUpdate("cancelEnrollment", List.of(request.getStudentId()),
-                            new Timestamp(request.getTimestampMap())), false);
+                            new Timestamp(request.getReadTimestampMap())),
+                    new Timestamp(request.getWriteTimestampMap()), false);
 
         } catch (InactiveServerException e)  {
             code = ResponseCode.INACTIVE_SERVER;

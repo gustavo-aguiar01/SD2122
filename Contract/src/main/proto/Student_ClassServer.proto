@@ -16,8 +16,9 @@ message ListClassResponse {
 }
 
 message EnrollRequest {
-  map<string, int32> timestamp = 1;
-  Student student = 2;
+  map<string, int32> readTimestamp = 1;
+  map<string, int32> writeTimestamp = 2;
+  Student student = 3;
 }
 
 message EnrollResponse {
