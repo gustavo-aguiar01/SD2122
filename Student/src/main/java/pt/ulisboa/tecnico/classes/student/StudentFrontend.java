@@ -32,7 +32,7 @@ public class StudentFrontend extends ClientFrontend {
         DebugMessage.debug("Calling remote call enroll.", "enroll", DEBUG_FLAG);
         Student newStudent = Student.newBuilder().setStudentId(id).setStudentName(name).build();
         EnrollRequest request = EnrollRequest.newBuilder().setStudent(newStudent)
-                .putAllTimestamp(timestamp.getMap()).build();
+                .putAllTimestamp(writeTimestamp.getMap()).build();
         EnrollResponse response;
 
         try {
@@ -41,6 +41,14 @@ public class StudentFrontend extends ClientFrontend {
                     StudentServiceGrpc.class.getMethod("newBlockingStub", Channel.class),
                     StudentServiceGrpc.StudentServiceBlockingStub.class.getMethod("enroll", EnrollRequest.class),
                     x -> ((EnrollResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), false);
+
+            if (!response.getTimestampMap().isEmpty()) {
+                writeTimestamp.merge(new Timestamp(response.getTimestampMap()));
+            }
+
+            DebugMessage.debug("Current write timestamp:\n" +
+                    writeTimestamp.toString(), "enroll", DEBUG_FLAG);
+
 
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.INVALID_ARGUMENT) {
@@ -69,7 +77,7 @@ public class StudentFrontend extends ClientFrontend {
     public String listClass() throws RuntimeException {
 
         DebugMessage.debug("Calling remote call listClass.", "listClass", DEBUG_FLAG);
-        ListClassRequest request = ListClassRequest.newBuilder().build();
+        ListClassRequest request = ListClassRequest.newBuilder().putAllTimestamp(writeTimestamp.getMap()).build();
         ListClassResponse response;
 
         try {
@@ -80,11 +88,11 @@ public class StudentFrontend extends ClientFrontend {
                     x -> ((ListClassResponse)x).getCode().equals(ResponseCode.INACTIVE_SERVER), false);
 
             if (response.getCode() == ResponseCode.OK) {
-                timestamp.merge(new Timestamp(response.getTimestampMap()));
+                readTimestamp.merge(new Timestamp(response.getTimestampMap()));
             }
 
             DebugMessage.debug("Current timestamp:\n" +
-                    timestamp.toString(), "closeEnrollments", DEBUG_FLAG);
+                    readTimestamp.toString(), "closeEnrollments", DEBUG_FLAG);
 
             ResponseCode code = response.getCode();
             String message = Stringify.format(code);

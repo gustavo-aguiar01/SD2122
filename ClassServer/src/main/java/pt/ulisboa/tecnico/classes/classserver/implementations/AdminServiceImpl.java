@@ -128,7 +128,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
     @Override
     public void gossip (GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
 
-
         DebugMessage.debug("Forcing gossip.", "gossip", DEBUG_FLAG);
 
         // Propagate state to secondary servers
@@ -158,19 +157,29 @@ public class AdminServiceImpl extends AdminServiceImplBase {
             replicaManager.addReplica(sa.getHost(), sa.getPort()); }});
 
         //ClassStateReport studentClass = replicaManager.reportClassState(false);
-        Collection<LogRecord> logRecordsCollection = replicaManager.reportLogRecords();
-        Collection<ClassesDefinitions.LogRecord> logRecords = logRecordsCollection.stream()
-                .map(lr -> ClassesDefinitions.LogRecord.newBuilder()
-                        .setId(lr.getReplicaManagerId())
-                        .putAllTimestamp(lr.getTimestamp().getMap())
-                        .setUpdate(ClassesDefinitions.Update.newBuilder()
-                                .setOperationName(lr.getUpdate().getOperationName())
-                                .addAllArguments(lr.getUpdate().getOperationArgs())
-                                .putAllTimestamp(lr.getUpdate().getTimestamp().getMap()).build())
-                        .build())
-                .collect(Collectors.toList());
+        LogReport logReport = replicaManager.reportLogRecords();
+        Collection<ClassesDefinitions.LogRecord> logRecords = logReport.getLogRecords().stream()
+                .map(lr -> {
+                    ClassesDefinitions.LogStatus status = ClassesDefinitions.LogStatus.SUCCESS;
+                    switch (lr.getStatus()) {
+                        case SUCCESS -> status = ClassesDefinitions.LogStatus.SUCCESS;
+                        case FAIL -> status = ClassesDefinitions.LogStatus.FAIL;
+                        case NONE -> status = ClassesDefinitions.LogStatus.NONE;
+                    }
+                    return ClassesDefinitions.LogRecord.newBuilder()
+                            .setId(lr.getReplicaManagerId())
+                            .putAllTimestamp(lr.getTimestamp().getMap())
+                            .setUpdate(ClassesDefinitions.Update.newBuilder()
+                                    .setOperationName(lr.getUpdate().getOperationName())
+                                    .addAllArguments(lr.getUpdate().getOperationArgs())
+                                    .putAllTimestamp(lr.getUpdate().getTimestamp().getMap()).build())
+                            .setPhysicalClock(lr.getPhysicalClock())
+                            .setStatus(status)
+                            .build();
+                }).collect(Collectors.toList());
 
-        DebugMessage.debug("Propagating log records:\n" + logRecordsCollection.stream().map(q -> q + "\n").toList(), null, DEBUG_FLAG);
+        DebugMessage.debug("Propagating log records:\n"
+                + logReport.getLogRecords().stream().map(q -> q + "\n").toList(), null, DEBUG_FLAG);
 
         for (ClassServerNamingServer.ServerAddress se : servers) {
             if (se.getHost().equals(replicaManager.getHost()) && se.getPort() == replicaManager.getPort()) {
@@ -179,7 +188,12 @@ public class AdminServiceImpl extends AdminServiceImplBase {
             DebugMessage.debug("Propagating to secondary server @ " + se.getHost() + ":" + se.getPort() + "...",
                     null, DEBUG_FLAG);
 
-            ClassServerClassServer.PropagateStateRequest propagateStateRequest = ClassServerClassServer.PropagateStateRequest.newBuilder().addAllLogRecords(logRecords).build();
+            ClassServerClassServer.PropagateStateRequest propagateStateRequest = ClassServerClassServer
+                    .PropagateStateRequest.newBuilder()
+                    .addAllLogRecords(logRecords)
+                    .putAllWriteTimestamp(logReport.getTimestamp().getMap())
+                    .setIssuer(logReport.getIssuer())
+                    .build();
             ClassServerClassServer.PropagateStateResponse response;
 
             try {
@@ -213,7 +227,6 @@ public class AdminServiceImpl extends AdminServiceImplBase {
                 }
             }
         }
-
 
         GossipResponse response = GossipResponse.newBuilder().setCode(ResponseCode.OK).build();
 

@@ -48,28 +48,33 @@ public class StudentServiceImpl extends StudentServiceImplBase {
 
         EnrollResponse response;
         ResponseCode code = ResponseCode.OK;
+        Timestamp timestamp = new Timestamp();
 
         try {
-            replicaManager.issueUpdate(new StateUpdate("enroll",
+            timestamp = replicaManager.issueUpdate(new StateUpdate("enroll",
                     Arrays.asList(request.getStudent().getStudentId(), request.getStudent().getStudentName()),
                                   new Timestamp(request.getTimestampMap())), false);
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+            timestamp = e.getTimestamp();
         } catch (StudentAlreadyEnrolledException e) {
             code = ResponseCode.STUDENT_ALREADY_ENROLLED;
+            timestamp = e.getTimestamp();
         } catch (FullClassException e) {
             code = ResponseCode.FULL_CLASS;
+            timestamp = e.getTimestamp();
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         } catch (UpdateIssuedException e) {
             code = ResponseCode.UPDATE_ISSUED;
+            timestamp = e.getTimestamp();
         } catch (ClassDomainException e) {
             ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = EnrollResponse.newBuilder().setCode(code).build();
+        response = EnrollResponse.newBuilder().setCode(code).putAllTimestamp(timestamp.getMap()).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 

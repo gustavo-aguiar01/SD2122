@@ -13,6 +13,7 @@ import pt.ulisboa.tecnico.classes.contract.ClassesDefinitions.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerClassServer.*;
 import pt.ulisboa.tecnico.classes.contract.classserver.ClassServerServiceGrpc.*;
 
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 public class ClassServerServiceImpl extends ClassServerServiceImplBase {
@@ -30,16 +31,24 @@ public class ClassServerServiceImpl extends ClassServerServiceImplBase {
         PropagateStateResponse response;
 
         try {
-            replicaManager.mergeLogRecords(request.getLogRecordsList()
-                    .stream().map(lr ->
-                            new LogRecord(lr.getId(),
-                                          new Timestamp(lr.getTimestampMap()),
-                            new StateUpdate(lr.getUpdate().getOperationName(),
-                                            lr.getUpdate().getArgumentsList(),
-                                            new Timestamp(lr.getUpdate().getTimestampMap()))))
-                    .collect(Collectors.toList()), false);
-            replicaManager.applyUpdates();
-            replicaManager.discardLogRecords();
+            replicaManager.integrateLogRecords(request.getLogRecordsList()
+                    .stream().map(lr -> {
+                                LogRecord.Status status = LogRecord.Status.SUCCESS;
+                                switch (lr.getStatus()) {
+                                    case SUCCESS -> status = LogRecord.Status.SUCCESS;
+                                    case FAIL -> status = LogRecord.Status.FAIL;
+                                    case NONE -> status = LogRecord.Status.NONE;
+                                }
+                                return new LogRecord(lr.getId(),
+                                        new Timestamp(lr.getTimestampMap()),
+                                        new StateUpdate(lr.getUpdate().getOperationName(),
+                                                lr.getUpdate().getArgumentsList(),
+                                                new Timestamp(lr.getUpdate().getTimestampMap())),
+                                        lr.getPhysicalClock(), status);
+                            })
+                    .collect(Collectors.toList()),
+                    new Timestamp(request.getWriteTimestampMap()),
+                    request.getIssuer(), false);
             code = ResponseCode.OK;
 
         } catch (InactiveServerException e) {

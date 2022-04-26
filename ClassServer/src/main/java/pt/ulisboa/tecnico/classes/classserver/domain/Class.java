@@ -243,7 +243,19 @@ public class Class {
 
         DebugMessage.debug("Revoked student " + id +
                 "'s registration from class.", null, DEBUG_FLAG);
+    }
 
+
+    public void removeEnrolledStudent(String studentId) {
+        stateConsistencyLock.writeLock().lock();
+        enrolledStudents.remove(studentId);
+        stateConsistencyLock.writeLock().unlock();
+    }
+
+    public void addRevokedStudent(ClassStudent student) {
+        stateConsistencyLock.writeLock().lock();
+        revokedStudents.put(student.getId(), student);
+        stateConsistencyLock.writeLock().unlock();
     }
 
     /**
@@ -260,28 +272,6 @@ public class Class {
         stateConsistencyLock.readLock().unlock();
         DEBUG_FLAG = true;
         return report;
-
-    }
-
-    /**
-     * Set the class state in an atomic manner
-     * @param capacity
-     * @param areRegistrationsOpen
-     * @param enrolledStudents
-     * @param revokedStudents
-     */
-    public void setClassState(int capacity, boolean areRegistrationsOpen,
-                              Collection<ClassStudent> enrolledStudents, Collection<ClassStudent> revokedStudents) {
-
-        DEBUG_FLAG = false;
-        DebugMessage.debug("Setting received class state...", "setClassState", DEBUG_FLAG);
-        stateConsistencyLock.writeLock().lock();
-        setCapacity(capacity);
-        setRegistrationsOpen(areRegistrationsOpen);
-        setEnrolledStudents(enrolledStudents);
-        setDiscardedStudents(revokedStudents);
-        stateConsistencyLock.writeLock().unlock();
-        DEBUG_FLAG = true;
 
     }
 

@@ -2,18 +2,27 @@ package pt.ulisboa.tecnico.classes.classserver;
 
 import pt.ulisboa.tecnico.classes.Timestamp;
 
-import java.util.Map;
-
 public class LogRecord {
 
     private String replicaManagerId;
     private Timestamp timestamp;
     private StateUpdate update;
+    private long physicalClock;
+    private Status status;
 
-    public LogRecord(String replicaManagerId, Timestamp timestamp, StateUpdate update) {
+    public enum Status {
+        SUCCESS,
+        FAIL,
+        NONE
+    }
+
+    public LogRecord(String replicaManagerId, Timestamp timestamp, StateUpdate update, long physicalClcok,
+                     LogRecord.Status status) {
         this.replicaManagerId = replicaManagerId;
         this.timestamp = timestamp;
         this.update = update;
+        this.physicalClock = physicalClcok;
+        this.status = status;
     }
 
     public String getReplicaManagerId() {
@@ -28,8 +37,38 @@ public class LogRecord {
         return update;
     }
 
+    public long getPhysicalClock() { return physicalClock; }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public Status getStatus() {
+        return this.status;
+    }
+
+    public String statusToString() {
+        String res;
+        switch(status){
+            case SUCCESS:
+                res = "success";
+                break;
+            case FAIL:
+                res = "fail";
+                break;
+            case NONE:
+                res =  "none";
+                break;
+            default:
+                res =  "";
+                break;
+        }
+        return res;
+    }
+
     public String toString() {
         return "< ReplicaId: " + replicaManagerId + ", timestamp: " + timestamp.toString()
-                + ", Update: " + update.toString();
+                + ", Update: " + update.toString() + ", Physical Clock: " + Long.toString(physicalClock) + " " +
+                " Successful: " + statusToString() + ">";
     }
 }

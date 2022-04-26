@@ -15,7 +15,6 @@ import pt.ulisboa.tecnico.classes.contract.naming.ClassServerNamingServer.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public abstract class ClientFrontend {
 
@@ -36,7 +35,8 @@ public abstract class ClientFrontend {
 
     public final int deadlineSecs = 5;
 
-    protected Timestamp timestamp = new Timestamp();
+    protected Timestamp readTimestamp = new Timestamp();
+    protected Timestamp writeTimestamp = new Timestamp();
 
     public ClientFrontend(String hostname, int port, String serviceName) throws RuntimeException {
         this.namingServerChannel = ManagedChannelBuilder.forAddress(hostname, port).usePlaintext().build();
@@ -75,10 +75,13 @@ public abstract class ClientFrontend {
         setServers(primaryServers, writeQualifiers);
         setServers(secondaryServers, readQualifiers);
 
-        allServers.stream().forEach(sa -> timestamp.put(sa.getHost() + ":" + sa.getPort(), 0));
+        allServers.stream().forEach(sa -> {
+            readTimestamp.put(sa.getHost() + ":" + sa.getPort(), 0);
+            writeTimestamp.put(sa.getHost() + ":" + sa.getPort(), 0);
+        });
 
         DebugMessage.debug("Current timestamp:\n" +
-                       timestamp.toString(), "refreshServers", DEBUG_FLAG);
+                       readTimestamp.toString(), "refreshServers", DEBUG_FLAG);
 
     }
 

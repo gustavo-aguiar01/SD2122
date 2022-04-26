@@ -107,19 +107,29 @@ public class ClassFrontend {
         }
 
         //ClassStateReport studentClass = replicaManager.reportClassState(false);
-        Collection<LogRecord> logRecordsCollection = replicaManager.reportLogRecords();
-        Collection<ClassesDefinitions.LogRecord> logRecords = logRecordsCollection.stream()
-                .map(lr -> ClassesDefinitions.LogRecord.newBuilder()
-                        .setId(lr.getReplicaManagerId())
-                        .putAllTimestamp(lr.getTimestamp().getMap())
-                        .setUpdate(Update.newBuilder()
-                                .setOperationName(lr.getUpdate().getOperationName())
-                                .addAllArguments(lr.getUpdate().getOperationArgs())
-                                .putAllTimestamp(lr.getUpdate().getTimestamp().getMap()).build())
-                        .build())
-                        .collect(Collectors.toList());
+        LogReport logReport = replicaManager.reportLogRecords();
+        Collection<ClassesDefinitions.LogRecord> logRecords = logReport.getLogRecords().stream()
+                .map(lr -> {
+                    ClassesDefinitions.LogStatus status = LogStatus.SUCCESS;
+                    switch (lr.getStatus()) {
+                        case SUCCESS -> status = LogStatus.SUCCESS;
+                        case FAIL -> status = LogStatus.FAIL;
+                        case NONE -> status = LogStatus.NONE;
+                    }
+                    return ClassesDefinitions.LogRecord.newBuilder()
+                            .setId(lr.getReplicaManagerId())
+                            .putAllTimestamp(lr.getTimestamp().getMap())
+                            .setUpdate(Update.newBuilder()
+                                    .setOperationName(lr.getUpdate().getOperationName())
+                                    .addAllArguments(lr.getUpdate().getOperationArgs())
+                                    .putAllTimestamp(lr.getUpdate().getTimestamp().getMap()).build())
+                            .setPhysicalClock(lr.getPhysicalClock())
+                            .setStatus(status)
+                            .build();
+                }).collect(Collectors.toList());
 
-        DebugMessage.debug("Propagating log records:\n" + logRecordsCollection.stream().map(q -> q + "\n").toList(), null, DEBUG_FLAG);
+        DebugMessage.debug("Propagating log records:\n" +
+                logReport.getLogRecords().stream().map(q -> q + "\n").toList(), null, DEBUG_FLAG);
 
         for (ServerAddress se : servers) {
             if (se.getHost().equals(hostname) && se.getPort() == port) {
@@ -128,7 +138,11 @@ public class ClassFrontend {
             DebugMessage.debug("Propagating to secondary server @ " + se.getHost() + ":" + se.getPort() + "...",
                     null, DEBUG_FLAG);
 
-            PropagateStateRequest request = PropagateStateRequest.newBuilder().addAllLogRecords(logRecords).build();
+            PropagateStateRequest request = PropagateStateRequest.newBuilder()
+                    .putAllWriteTimestamp(logReport.getTimestamp().getMap())
+                    .addAllLogRecords(logRecords)
+                    .setIssuer(logReport.getIssuer())
+                    .build();
             PropagateStateResponse response;
 
             try {

@@ -35,6 +35,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         OpenEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
+        Timestamp timestamp = new Timestamp();
 
         try {
 
@@ -43,7 +44,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
                 return;
             }
 
-            replicaManager.issueUpdate(
+            timestamp = replicaManager.issueUpdate(
                     new StateUpdate("openEnrollments",
                             List.of(Integer.toString(request.getCapacity())),
                             new Timestamp(request.getTimestampMap())), false);
@@ -51,18 +52,21 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         } catch (InactiveServerException e) {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyOpenException e) {
+            timestamp = e.getTimestamp();
             code = ResponseCode.ENROLLMENTS_ALREADY_OPENED;
         } catch (FullClassException e) {
+            timestamp = e.getTimestamp();
             code = ResponseCode.FULL_CLASS;
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         } catch (UpdateIssuedException e) {
+            timestamp = e.getTimestamp();
             code = ResponseCode.UPDATE_ISSUED;
         } catch (ClassDomainException e) {
             ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = OpenEnrollmentsResponse.newBuilder().setCode(code).build();
+        response = OpenEnrollmentsResponse.newBuilder().putAllTimestamp(timestamp.getMap()).setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -78,9 +82,10 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CloseEnrollmentsResponse response;
         ResponseCode code = ResponseCode.OK;
+        Timestamp timestamp = new Timestamp();
 
         try {
-            replicaManager.issueUpdate(
+            timestamp = replicaManager.issueUpdate(
                     new StateUpdate("closeEnrollments", List.of(),
                             new Timestamp(request.getTimestampMap())), false);
 
@@ -88,15 +93,17 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (EnrollmentsAlreadyClosedException e) {
             code = ResponseCode.ENROLLMENTS_ALREADY_CLOSED;
+            timestamp = e.getTimestamp();
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         } catch (UpdateIssuedException e) {
             code = ResponseCode.UPDATE_ISSUED;
+            timestamp = e.getTimestamp();
         } catch (ClassDomainException e) {
             ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = CloseEnrollmentsResponse.newBuilder().setCode(code).build();
+        response = CloseEnrollmentsResponse.newBuilder().putAllTimestamp(timestamp.getMap()).setCode(code).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
 
@@ -146,6 +153,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
 
         CancelEnrollmentResponse response;
         ResponseCode code = ResponseCode.OK;
+        Timestamp timestamp = new Timestamp();
 
         if (!ClassStudent.isValidStudentId(request.getStudentId())) {
             responseObserver.onError(INVALID_ARGUMENT.withDescription("Invalid student id input! Format: alunoXXXX (each X is a positive integer).").asRuntimeException());
@@ -153,7 +161,7 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
         }
 
         try {
-            replicaManager.issueUpdate(
+            timestamp = replicaManager.issueUpdate(
                     new StateUpdate("cancelEnrollment", List.of(request.getStudentId()),
                             new Timestamp(request.getTimestampMap())), false);
 
@@ -161,15 +169,17 @@ public class ProfessorServiceImpl extends ProfessorServiceImplBase {
             code = ResponseCode.INACTIVE_SERVER;
         } catch (NonExistingStudentException e) {
             code = ResponseCode.NON_EXISTING_STUDENT;
+            timestamp = e.getTimestamp();
         } catch (InvalidOperationException e) {
             code = ResponseCode.WRITING_NOT_SUPPORTED;
         } catch (UpdateIssuedException e) {
             code = ResponseCode.UPDATE_ISSUED;
+            timestamp = e.getTimestamp();
         } catch (ClassDomainException e) {
             ; /* this is never reached since all relevant exceptions which inherit this are already handled */
         }
 
-        response = CancelEnrollmentResponse.newBuilder()
+        response = CancelEnrollmentResponse.newBuilder().putAllTimestamp(timestamp.getMap())
                 .setCode(code).build();
 
         responseObserver.onNext(response);
